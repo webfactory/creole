@@ -1,0 +1,113 @@
+<?xml version="1.0"?>
+
+<!--
+	This build file packages the phing files, builds a package.xml for installation
+	using PEAR and creates the necessary TGZ files.
+-->
+
+<project name="phing" basedir="." default="jargon">
+
+	<property name="creole.home" value=".."/>
+	<property name="build.base.dir" value="build"/>
+	<property name="pkgname" value="jargon-${version}"/>
+	<property name="build.src.dir" value="${build.base.dir}/${pkgname}"/>
+
+	<!-- some default properties -->
+	<property name="notes">Latest release of Jargon classes for Creole.</property>
+	<property name="state" value="stable"/>
+
+	<taskdef
+      name="pear-package"
+      classname="BuildJargonPEARPackageTask" classpath="."/>
+
+	<fileset dir="${creole.home}/classes/jargon" id="jargon-classes">
+		<include name="**/*.php"/>
+		<exclude name="drivers/oracle/**"/>
+	</fileset>
+
+	<!--
+		==============================================
+		Main entry point
+		==============================================
+	-->
+	<target name="jargon" if="version" depends="versioncheck">
+		<phingcall target="build"/>
+		<phingcall target="package"/>
+		<phingcall target="tar"/>
+	</target>
+
+	<!--
+	 ===================================================================
+	 Target: checks if language was given, otherwise fail
+	 ===================================================================
+	-->
+	<target name="versioncheck" unless="version">
+		<echo message="====================================================="/>
+		<echo message="Version not specified. You must enter a version. In"/>
+		<echo message="the future you can add this to build.properties or"/>
+		<echo message="enter it on the command line: "/>
+		<echo message=" "/>
+		<echo message="-Dversion=2.0.0b1"/>
+		<echo message="====================================================="/>
+		<input propertyname="version" promptChar=":">Version for package</input>
+
+		<property name="pkgname" value="jargon-${version}" override="true"/>
+		<property name="build.src.dir" value="${build.base.dir}/${pkgname}" override="true"/>
+
+	</target>
+
+	<!--
+		==============================================
+		Copy the desired files into the build/ dir
+		making sure to put them in the directory
+		structure that will be needed for PEAR install
+		==============================================
+	-->
+	<target name="build">
+		<echo>-----------------------------</echo>
+		<echo>| Creating directory layout |</echo>
+		<echo>-----------------------------</echo>
+
+		<delete dir="${build.base.dir}"/>
+
+		<copy todir="${build.src.dir}">
+			<fileset refid="jargon-classes"/>
+		</copy>
+
+	</target>
+
+	<!--
+		==============================================
+		Create a PEAR package.xml which will guide the
+		installation.
+		==============================================
+	-->
+	<target name="package">
+
+		<echo>-----------------------------</echo>
+		<echo>| Creating PEAR package.xml |</echo>
+		<echo>-----------------------------</echo>
+		<echo></echo>
+
+		<pear-package dir="${build.src.dir}" destFile="${build.base.dir}/package.xml" version="${version}" state="${state}" notes="${notes}">
+			<fileset refid="jargon-classes"/>
+		</pear-package>
+
+	</target>
+
+	<!--
+		==============================================
+		Create a tar.gz of the files, which will be
+		installed by pear package manager.
+		==============================================
+	-->
+	<target name="tar">
+		<echo>-----------------------------</echo>
+		<echo>| Creating tar.gz package   |</echo>
+		<echo>-----------------------------</echo>
+		<property name="tarfile" value="${build.base.dir}/${pkgname}.tgz"/>
+		<delete	file="${tarfile}"/>
+		<tar destFile="${tarfile}" basedir="${build.base.dir}" />
+	</target>
+
+</project>
