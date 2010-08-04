@@ -36,7 +36,7 @@ abstract class CreoleTypes {
         const INTEGER = 5;
         const CHAR = 6;
         const VARCHAR = 7;
-        const TEXT = 17;
+        const TEXT = 24;
         const FLOAT = 8;
         const DOUBLE = 9;
         const DATE = 10;
@@ -121,7 +121,7 @@ abstract class CreoleTypes {
          * @param string $nativeType DB native type (e.g. 'TEXT', 'byetea', etc.).
          * @return int Creole native type (e.g. Types::LONGVARCHAR, Types::BINARY, etc.).
          */
-        abstract static function getType($nativeType);
+        static function getType($nativeType) {}
         
         /**
          * This method will return a native type that corresponds to the specified
@@ -130,7 +130,7 @@ abstract class CreoleTypes {
          * native type will be returned.
          * @return string Native type string.
          */
-        abstract static function getNativeType($creoleType);
+        static function getNativeType($creoleType) {}
         
         /**
          * Gets the "affix" to use for ResultSet::get*() and PreparedStatement::set*() methods.
