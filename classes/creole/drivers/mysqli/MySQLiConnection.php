@@ -173,6 +173,10 @@ class MySQLiConnection extends ConnectionCommon implements Connection {
             throw new SQLException('Could not execute query', mysqli_error($this->dblink), $sql);
         }
 
+        if ($result === true) {
+            return null;
+        }
+
         return new MySQLiResultSet($this, $result, $fetchmode);
     }
 
