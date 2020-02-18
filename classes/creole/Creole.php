@@ -354,9 +354,9 @@ class Creole {
 				}
 				
 			}
-		} 
+		}
 
-        return $parsed;
+        return array_map(function ($value) { return urldecode($value); }, $parsed);
     }
 
     /**
