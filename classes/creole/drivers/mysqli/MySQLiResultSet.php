@@ -142,7 +142,7 @@ class MySQLiResultSet extends ResultSetCommon implements ResultSet {
             throw new SQLException("Invalid resultset column: " . (is_int($column) ? $column + 1 : $column));
         }
 
-        if ($this->fields[$column] === null) {
+        if ($this->fields[$column] === null || $this->fields[$column] == '0000-00-00 00:00:00' || $this->fields[$column] === '0000-00-00') {
             return null;
         }
 
