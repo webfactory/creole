@@ -8,39 +8,48 @@ require_once 'creole/CreoleBaseTest.php';
  * -
  *
  * @author Hans Lellelid <hans@xmpl.org>
+ *
  * @version $Revision: 1.2 $
  */
-class TableInfoTest extends CreoleBaseTest {
-
+class TableInfoTest extends CreoleBaseTest
+{
     /**
      * The database connection.
+     *
      * @var Connection
      */
     protected $conn;
 
-
-    public function setUp() {
+    public function setUp()
+    {
     }
 
     /**
      * Construct the class.  This is called before every test (method) is invoked.
      */
-    public function __construct() {
+    public function __construct()
+    {
         $this->conn = DriverTestManager::getConnection();
     }
 
     /**
-     *
+     * @test
      */
-    public function testGetColumns() {
-        $table = $this->conn->getDatabaseInfo()->getTable("products");
+    public function getColumns()
+    {
+        $table = $this->conn->getDatabaseInfo()->getTable('products');
         $cols = $table->getColumns();
         $this->assertEquals(sizeof($cols), 12);
     }
 
-    /** Test getting the products table */
-    public function testGetColumn() {
-        $table = $this->conn->getDatabaseInfo()->getTable("products");
+    /**
+     * Test getting the products table.
+     *
+     * @test
+     */
+    public function getColumn()
+    {
+        $table = $this->conn->getDatabaseInfo()->getTable('products');
         $col = $table->getColumn('ProductID');
         $this->assertEquals($col->getName(), 'ProductID');
         $this->assertEquals($col->type, CreoleTypes :: INTEGER);
@@ -55,10 +64,13 @@ class TableInfoTest extends CreoleBaseTest {
 
         //i think we need more tests for every type of column...
     }
-    
-    public function testGetColumn_Scale()
+
+    /**
+     * @test
+     */
+    public function getColumn_Scale()
     {
-    	$table = $this->conn->getDatabaseInfo()->getTable("products");
+        $table = $this->conn->getDatabaseInfo()->getTable('products');
         $col = $table->getColumn('UnitPrice');
         print_r($col);
         $this->assertEquals($col->getName(), 'UnitPrice');
@@ -66,20 +78,30 @@ class TableInfoTest extends CreoleBaseTest {
         $this->assertEquals($col->getScale(), 2);
     }
 
-    /** Test getting the indexes */
-    public function testGetIndexes() {
-        $table = $this->conn->getDatabaseInfo()->getTable("indexes");
+    /**
+     * Test getting the indexes.
+     *
+     * @test
+     */
+    public function getIndexes()
+    {
+        $table = $this->conn->getDatabaseInfo()->getTable('indexes');
         $indexes = $table->getIndexes();
-        $this->assertEquals(sizeof($indexes), 3);//not including primary key!!!
+        $this->assertEquals(sizeof($indexes), 3); //not including primary key!!!
 
         $this->assertNotNull($this->findIndex($table, 'ProductNameIDX'));
         $this->assertNotNull($this->findIndex($table, 'ComplexIDX'));
         $this->assertNotNull($this->findIndex($table, 'UniqueComplexIDX'));
     }
 
-    /** Test getting the complex indexes info */
-    public function testComplexIndexInfo() {
-        $table = $this->conn->getDatabaseInfo()->getTable("indexes");
+    /**
+     * Test getting the complex indexes info.
+     *
+     * @test
+     */
+    public function complexIndexInfo()
+    {
+        $table = $this->conn->getDatabaseInfo()->getTable('indexes');
 
         $index = $this->findIndex($table, 'ComplexIDX');
         $columns = $index->getColumns();
@@ -91,9 +113,14 @@ class TableInfoTest extends CreoleBaseTest {
         $this->assertFalse($index->isUnique());
     }
 
-    /** Test getting the unique indexes info */
-    public function testUniqueIndexInfo() {
-        $table = $this->conn->getDatabaseInfo()->getTable("indexes");
+    /**
+     * Test getting the unique indexes info.
+     *
+     * @test
+     */
+    public function uniqueIndexInfo()
+    {
+        $table = $this->conn->getDatabaseInfo()->getTable('indexes');
 
         $index = $this->findIndex($table, 'UniqueComplexIDX');
         $columns = $index->getColumns();
@@ -101,30 +128,36 @@ class TableInfoTest extends CreoleBaseTest {
         $this->assertTrue($index->isUnique());
     }
 
-    /** Test foreign key info */
-    public function testForeignKeyInfo() {
-        $table = $this->conn->getDatabaseInfo()->getTable("ref_table");
+    /**
+     * Test foreign key info.
+     *
+     * @test
+     */
+    public function foreignKeyInfo()
+    {
+        $table = $this->conn->getDatabaseInfo()->getTable('ref_table');
 
         $this->assertEquals(sizeof($table->getForeignKeys()), 2);
-        $refs = $table->getForeignKey("RefID1")->getReferences();
+        $refs = $table->getForeignKey('RefID1')->getReferences();
         $this->assertEquals(sizeof($refs), 1);
-        $this->assertEquals($refs[0][0]->getName(), "RefID1");
-        $this->assertEquals($refs[0][1]->getName(), "UniqueCol1");
+        $this->assertEquals($refs[0][0]->getName(), 'RefID1');
+        $this->assertEquals($refs[0][1]->getName(), 'UniqueCol1');
 
-        $refs = $table->getForeignKey("RefID2")->getReferences();
+        $refs = $table->getForeignKey('RefID2')->getReferences();
         $this->assertEquals(sizeof($refs), 1);
-        $this->assertEquals($refs[0][0]->getName(), "RefID2");
-        $this->assertEquals($refs[0][1]->getName(), "UniqueCol2");
+        $this->assertEquals($refs[0][0]->getName(), 'RefID2');
+        $this->assertEquals($refs[0][1]->getName(), 'UniqueCol2');
     }
 
     protected function findIndex($table, $name)
     {
         $indexes = $table->getIndexes();
-        foreach($indexes as $index) {
-            if($index->getName() == $name)
+        foreach ($indexes as $index) {
+            if ($index->getName() == $name) {
                 return $index;
+            }
         }
+
         return null;
     }
-
 }

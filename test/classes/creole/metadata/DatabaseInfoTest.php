@@ -8,12 +8,14 @@ require_once 'creole/CreoleBaseTest.php';
  * -
  *
  * @author Hans Lellelid <hans@xmpl.org>
+ *
  * @version $Revision: 1.2 $
  */
-class DatabaseInfoTest extends CreoleBaseTest {
-
+class DatabaseInfoTest extends CreoleBaseTest
+{
     /**
      * The database connection.
+     *
      * @var Connection
      */
     protected $conn;
@@ -23,29 +25,39 @@ class DatabaseInfoTest extends CreoleBaseTest {
      */
     protected $dbi;
 
-    public function setUp() {
+    public function setUp()
+    {
     }
 
     /**
      * Construct the class.  This is called before every test (method) is invoked.
      */
-    public function __construct() {
+    public function __construct()
+    {
         $this->conn = DriverTestManager::getConnection();
         $this->dbi = $this->conn->getDatabaseInfo();
     }
 
     /**
      * Make sure at least "products" table is in table list.
+     *
+     * @test
      */
-    public function testGetTables() {
+    public function getTables()
+    {
         $tables = $this->dbi->getTables();
         $this->assertTrue(count($tables) >= 1, "Expected at least one table ('products')from getTables() call.");
     }
 
-    /** Test getting the products table */
-    public function testGetTable() {
-        $products = $this->dbi->getTable("products");
-        $products2 = $this->dbi->getTable("Products");
-        $this->assertEquals($products, $products2, 0, "Expected getTable() to be case-insensitive.");
+    /**
+     * Test getting the products table.
+     *
+     * @test
+     */
+    public function getTable()
+    {
+        $products = $this->dbi->getTable('products');
+        $products2 = $this->dbi->getTable('Products');
+        $this->assertEquals($products, $products2, 0, 'Expected getTable() to be case-insensitive.');
     }
 }

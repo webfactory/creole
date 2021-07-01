@@ -18,7 +18,7 @@
  * and is licensed under the LGPL. For more information please see
  * <http://creole.phpdb.org>.
  */
- 
+
 require_once 'creole/ResultSet.php';
 require_once 'creole/common/ResultSetCommon.php';
 
@@ -27,78 +27,67 @@ require_once 'creole/common/ResultSetCommon.php';
  *
  * @author    David Giffin <david@giffin.org>
  * @author    Hans Lellelid <hans@xmpl.org>
+ *
  * @version   $Revision: 1.13 $
- * @package   creole.drivers.oracle
  */
 class OCI8ResultSet extends ResultSetCommon implements ResultSet
 {
     /**
      * @see ResultSet::seek()
-     */ 
-    function seek($rownum)
+     */
+    public function seek($rownum)
     {
-        if ( $rownum < $this->cursorPos )
-		{
+        if ($rownum < $this->cursorPos) {
             // this will effectively disable previous(), first() and some calls to relative() or absolute()
-            throw new SQLException( 'Oracle ResultSet is FORWARD-ONLY' );
+            throw new SQLException('Oracle ResultSet is FORWARD-ONLY');
         }
-        
+
         // Oracle has no seek function imulate it here
-        while ( $this->cursorPos < $rownum )
-		{
+        while ($this->cursorPos < $rownum) {
             $this->next();
         }
 
-        $this->cursorPos		= $rownum;
+        $this->cursorPos = $rownum;
 
         return true;
     }
-    
+
     /**
      * @see ResultSet::next()
-     */ 
-    function next()
-    {   
-		// no specific result position available
+     */
+    public function next()
+    {
+        // no specific result position available
 
-		// Returns an array, which corresponds to the next result row or FALSE
-		// in case of error or there is no more rows in the result.
-        $this->fields			= oci_fetch_array( $this->result
-									, $this->fetchmode
-										+ OCI_RETURN_NULLS
-										+ OCI_RETURN_LOBS
-								);
+        // Returns an array, which corresponds to the next result row or FALSE
+        // in case of error or there is no more rows in the result.
+        $this->fields = oci_fetch_array($this->result, $this->fetchmode
+                                        + OCI_RETURN_NULLS
+                                        + OCI_RETURN_LOBS
+                                );
 
-		if ( ! $this->fields )
-		{
-			// grab error via array
-			$error				= oci_error( $this->result );
+        if (!$this->fields) {
+            // grab error via array
+            $error = oci_error($this->result);
 
-			if ( ! $error )
-			{
-				// end of recordset
-				$this->afterLast();
+            if (!$error) {
+                // end of recordset
+                $this->afterLast();
 
-				return false;
-			}
-
-			else
-			{
-				throw new SQLException( 'Error fetching result'
-					, $error[ 'code' ] . ': ' . $error[ 'message' ]
-				);
-			}
-		}
-
-		// Oracle returns all field names in uppercase and associative indices
-		// in the result array will be uppercased too.
-        if ($this->fetchmode === ResultSet::FETCHMODE_ASSOC && $this->lowerAssocCase)
-		{
-			$this->fields = array_change_key_case($this->fields, CASE_LOWER);
+                return false;
+            } else {
+                throw new SQLException('Error fetching result', $error['code'].': '.$error['message']);
+            }
         }
-        
+
+        // Oracle returns all field names in uppercase and associative indices
+        // in the result array will be uppercased too.
+        if (ResultSet::FETCHMODE_ASSOC === $this->fetchmode && $this->lowerAssocCase) {
+            $this->fields = array_change_key_case($this->fields, CASE_LOWER);
+        }
+
         // Advance cursor position
-        $this->cursorPos++;
+        ++$this->cursorPos;
 
         return true;
     }
@@ -106,26 +95,23 @@ class OCI8ResultSet extends ResultSetCommon implements ResultSet
     /**
      * @see ResultSet::getRecordCount()
      */
-    function getRecordCount()
+    public function getRecordCount()
     {
-        $rows					= oci_num_rows( $this->result );
+        $rows = oci_num_rows($this->result);
 
-        if ( $rows === false )
-		{
-            throw new SQLException( 'Error fetching num rows'
-				, $this->conn->nativeError( $this->result )
-			);
+        if (false === $rows) {
+            throw new SQLException('Error fetching num rows', $this->conn->nativeError($this->result));
         }
 
-        return ( int ) $rows;
+        return (int) $rows;
     }
 
     /**
      * @see ResultSet::close()
-     */ 
-    function close()
+     */
+    public function close()
     {
-		$this->fields			= array();
-        @oci_free_statement( $this->result );
+        $this->fields = [];
+        @oci_free_statement($this->result);
     }
 }

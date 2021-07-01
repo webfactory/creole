@@ -24,13 +24,19 @@ require_once 'creole/IdGeneratorTest.php';
 /**
  * Tests for MySQLiIdGenerator.
  *
- *
  * @author Sebastian Bergmann <sb@sebastian-bergmann.de>
+ *
  * @version $Revision: 1.2 $
  */
-class MySQLiIdGeneratorTest extends IdGeneratorTest {
-    /** Ensures that drivers are implementing the correct Id Method. */
-    public function testGetMethod() {
-        $this->assertEquals(IdGenerator::AUTOINCREMENT, $this->idgen->getIdMethod(), 0, "MySQL Id method should be AUTOINCREMENT (but is not)");
+class MySQLiIdGeneratorTest extends IdGeneratorTest
+{
+    /**
+     * Ensures that drivers are implementing the correct Id Method.
+     *
+     * @test
+     */
+    public function getMethod()
+    {
+        $this->assertEquals(IdGenerator::AUTOINCREMENT, $this->idgen->getIdMethod(), 0, 'MySQL Id method should be AUTOINCREMENT (but is not)');
     }
 }

@@ -20,17 +20,16 @@
  * <http://creole.phpdb.org>.
  */
 
-
 require_once 'creole/Connection.php';
 require_once 'creole/common/ConnectionCommon.php';
 include_once 'creole/drivers/mssql/MSSQLResultSet.php';
 
 /**
  * MS SQL Server implementation of Connection.
- * 
+ *
  * If you have trouble with BLOB / CLOB support
  * --------------------------------------------
- * 
+ *
  * You may need to change some PHP ini settings.  In particular, the following settings
  * set the text size to maximum which should get around issues with truncated data:
  * <code>
@@ -39,48 +38,48 @@ include_once 'creole/drivers/mssql/MSSQLResultSet.php';
  * </code>
  * We do not set these by default (anymore) because they do not apply to cases where MSSQL
  * is being used w/ FreeTDS.
- * 
+ *
  * @author    Hans Lellelid <hans@xmpl.org>
- * @author    Stig Bakken <ssb@fast.no> 
+ * @author    Stig Bakken <ssb@fast.no>
  * @author    Lukas Smith
+ *
  * @version   $Revision: 1.25 $
- * @package   creole.drivers.mssql
- */ 
-class MSSQLConnection extends ConnectionCommon implements Connection {        
-    
+ */
+class MSSQLConnection extends ConnectionCommon implements Connection
+{
     /** Current database (used in mssql_select_db()). */
     private $database;
-    
+
     /**
      * @see Connection::connect()
      */
-    function connect($dsninfo, $flags = 0)
-    {                
+    public function connect($dsninfo, $flags = 0)
+    {
         if (!extension_loaded('mssql') && !extension_loaded('sybase') && !extension_loaded('sybase_ct')) {
             throw new SQLException('mssql extension not loaded');
         }
 
         $this->dsn = $dsninfo;
         $this->flags = $flags;
-                
+
         $persistent = ($flags & Creole::PERSISTENT === Creole::PERSISTENT);
 
         $user = $dsninfo['username'];
         $pw = $dsninfo['password'];
         $dbhost = $dsninfo['hostspec'] ? $dsninfo['hostspec'] : 'localhost';
-		
-		if (PHP_OS == "WINNT" || PHP_OS == "WIN32") {
-            $portDelimiter = ",";
+
+        if (PHP_OS == 'WINNT' || PHP_OS == 'WIN32') {
+            $portDelimiter = ',';
         } else {
-            $portDelimiter = ":";
+            $portDelimiter = ':';
         }
-       
-        if(!empty($dsninfo['port'])) {
-                $dbhost .= $portDelimiter.$dsninfo['port'];
+
+        if (!empty($dsninfo['port'])) {
+            $dbhost .= $portDelimiter.$dsninfo['port'];
         } else {
-                $dbhost .= $portDelimiter.'1433';
+            $dbhost .= $portDelimiter.'1433';
         }
-		
+
         $connect_function = $persistent ? 'mssql_pconnect' : 'mssql_connect';
 
         if ($dbhost && $user && $pw) {
@@ -93,54 +92,58 @@ class MSSQLConnection extends ConnectionCommon implements Connection {
         if (!$conn) {
             throw new SQLException('connect failed', mssql_get_last_message());
         }
-        
+
         if ($dsninfo['database']) {
             if (!@mssql_select_db($dsninfo['database'], $conn)) {
-                throw new SQLException('No database selected');               
+                throw new SQLException('No database selected');
             }
-            
+
             $this->database = $dsninfo['database'];
         }
-        
-        $this->dblink = $conn;        
-    }    
-    
+
+        $this->dblink = $conn;
+    }
+
     /**
      * @see Connection::getDatabaseInfo()
      */
     public function getDatabaseInfo()
     {
         require_once 'creole/drivers/mssql/metadata/MSSQLDatabaseInfo.php';
+
         return new MSSQLDatabaseInfo($this);
     }
-    
-     /**
+
+    /**
      * @see Connection::getIdGenerator()
      */
     public function getIdGenerator()
     {
         require_once 'creole/drivers/mssql/MSSQLIdGenerator.php';
+
         return new MSSQLIdGenerator($this);
     }
-    
+
     /**
      * @see Connection::prepareStatement()
      */
-    public function prepareStatement($sql) 
+    public function prepareStatement($sql)
     {
         require_once 'creole/drivers/mssql/MSSQLPreparedStatement.php';
+
         return new MSSQLPreparedStatement($this, $sql);
     }
-    
+
     /**
      * @see Connection::createStatement()
      */
     public function createStatement()
     {
         require_once 'creole/drivers/mssql/MSSQLStatement.php';
+
         return new MSSQLStatement($this);
     }
-    
+
     /**
      * Returns false since MSSQL doesn't support this method.
      */
@@ -148,55 +151,58 @@ class MSSQLConnection extends ConnectionCommon implements Connection {
     {
         return false;
     }
-    
+
     /**
      * @see Connection::close()
      */
-    function close()
+    public function close()
     {
         $ret = @mssql_close($this->dblink);
         $this->dblink = null;
+
         return $ret;
     }
-    
+
     /**
      * @see Connection::executeQuery()
      */
-    function executeQuery($sql, $fetchmode = null)
-    {            
+    public function executeQuery($sql, $fetchmode = null)
+    {
         $this->lastQuery = $sql;
         if (!@mssql_select_db($this->database, $this->dblink)) {
             throw new SQLException('No database selected');
-        }       
+        }
         $result = @mssql_query($sql, $this->dblink);
         if (!$result) {
             throw new SQLException('Could not execute query', mssql_get_last_message());
         }
+
         return new MSSQLResultSet($this, $result, $fetchmode);
     }
 
     /**
      * @see Connection::executeUpdate()
      */
-    function executeUpdate($sql)
-    {    
-        
+    public function executeUpdate($sql)
+    {
         $this->lastQuery = $sql;
         if (!mssql_select_db($this->database, $this->dblink)) {
             throw new SQLException('No database selected');
         }
-        
+
         $result = @mssql_query($sql, $this->dblink);
         if (!$result) {
             throw new SQLException('Could not execute update', mssql_get_last_message(), $sql);
         }
-        
+
         return $this->getUpdateCount();
     }
 
     /**
      * Start a database transaction.
+     *
      * @throws SQLException
+     *
      * @return void
      */
     protected function beginTrans()
@@ -206,10 +212,12 @@ class MSSQLConnection extends ConnectionCommon implements Connection {
             throw new SQLException('Could not begin transaction', mssql_get_last_message());
         }
     }
-    
+
     /**
      * Commit the current transaction.
+     *
      * @throws SQLException
+     *
      * @return void
      */
     protected function commitTrans()
@@ -225,12 +233,14 @@ class MSSQLConnection extends ConnectionCommon implements Connection {
 
     /**
      * Roll back (undo) the current transaction.
+     *
      * @throws SQLException
+     *
      * @return void
      */
     protected function rollbackTrans()
     {
-        if (!@mssql_select_db($this->database, $this->dblink)) {            
+        if (!@mssql_select_db($this->database, $this->dblink)) {
             throw new SQLException('no database selected');
         }
         $result = @mssql_query('ROLLBACK TRAN', $this->dblink);
@@ -244,10 +254,11 @@ class MSSQLConnection extends ConnectionCommon implements Connection {
      * if the last query was a select, returns 0.
      *
      * @return int Number of rows affected by the last query
+     *
      * @throws SQLException
      */
-    function getUpdateCount()
-    {       
+    public function getUpdateCount()
+    {
         $res = @mssql_query('select @@rowcount', $this->dblink);
         if (!$res) {
             throw new SQLException('Unable to get affected row count', mssql_get_last_message());
@@ -259,25 +270,27 @@ class MSSQLConnection extends ConnectionCommon implements Connection {
             @mssql_free_result($res);
             $result = $ar[0];
         }
-        
+
         return $result;
-    }          
-    
-    
+    }
+
     /**
      * Creates a CallableStatement object for calling database stored procedures.
-     * 
+     *
      * @param string $sql
+     *
      * @return CallableStatement
+     *
      * @throws SQLException
      */
-    function prepareCall($sql) 
-    {             
+    public function prepareCall($sql)
+    {
         require_once 'creole/drivers/mssql/MSSQLCallableStatement.php';
         $stmt = mssql_init($sql);
         if (!$stmt) {
             throw new SQLException('Unable to prepare statement', mssql_get_last_message(), $sql);
         }
+
         return new MSSQLCallableStatement($this, $stmt);
     }
 }

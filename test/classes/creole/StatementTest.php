@@ -4,120 +4,143 @@ require_once 'creole/CreoleBaseTest.php';
 
 /**
  * Tests for the Statement class.
- * 
- * - 
- * 
+ *
+ * -
+ *
  * @author Hans Lellelid <hans@xmpl.org>
+ *
  * @version $Revision: 1.6 $
  */
-class StatementTest extends CreoleBaseTest {
-    
+class StatementTest extends CreoleBaseTest
+{
     /**
      * The database connection.
+     *
      * @var Connection
      */
     protected $conn;
 
-    public function setUp() {
+    public function setUp()
+    {
         DriverTestManager::restore();
     }
-    
+
     /**
      * Construct the class.  This is called before every test (method) is invoked.
      */
-    public function __construct() {
+    public function __construct()
+    {
         $this->conn = DriverTestManager::getConnection();
-    }             
-    
-    public function testSetLimit() {
+    }
+
+    /**
+     * @test
+     */
+    public function setLimit()
+    {
         $exch = DriverTestManager::getExchange('ResultSetTest.ALL_RECORDS');
         $stmt = $this->conn->createStatement();
-        $stmt->setLimit(10);        
-        $rs = $stmt->executeQuery($exch->getSql(),ResultSet::FETCHMODE_NUM);        
+        $stmt->setLimit(10);
+        $rs = $stmt->executeQuery($exch->getSql(), ResultSet::FETCHMODE_NUM);
         $this->assertEquals(10, $rs->getRecordCount());
     }
-    
-    public function testSetOffset() {
+
+    /**
+     * @test
+     */
+    public function setOffset()
+    {
         $exch = DriverTestManager::getExchange('ResultSetTest.ALL_RECORDS');
         $stmt = $this->conn->createStatement();
         $stmt->setLimit(10);
         $stmt->setOffset(5);
-        $rs = $stmt->executeQuery($exch->getSql(),ResultSet::FETCHMODE_NUM);
-        
+        $rs = $stmt->executeQuery($exch->getSql(), ResultSet::FETCHMODE_NUM);
+
         $rs->next();
-        
+
         $this->assertEquals(6, $rs->getInt(1));
-        
+
         $rs->close();
-        
-        // test setting offset w/ no limit        
+
+        // test setting offset w/ no limit
         $stmt->setLimit(0);
         $stmt->setOffset(6);
-        $rs = $stmt->executeQuery($exch->getSql(), ResultSet::FETCHMODE_NUM);        
-        $rs->next();        
+        $rs = $stmt->executeQuery($exch->getSql(), ResultSet::FETCHMODE_NUM);
+        $rs->next();
         $this->assertEquals(7, $rs->getInt(1));
-        
+
         // try changing the offset info
         $stmt->setLimit(10);
         $stmt->setOffset(4);
-        $rs = $stmt->executeQuery($exch->getSql(),ResultSet::FETCHMODE_NUM);
-        
+        $rs = $stmt->executeQuery($exch->getSql(), ResultSet::FETCHMODE_NUM);
+
         $rs->next();
-        
-        $this->assertEquals(5, $rs->getInt(1), 0, "Expected new first row to have changed after changing offset.");
-        
+
+        $this->assertEquals(5, $rs->getInt(1), 0, 'Expected new first row to have changed after changing offset.');
+
         $stmt->close();
-    }        
-    
+    }
 
     /**
-     * @todo -c Implement 
+     * @todo -c Implement
+     *
+     * @test
      */
-    public function testGetMoreResults() {
-        
+    public function getMoreResults()
+    {
         // coming sooon..
     }
-    
-    public function testExecuteQuery() {                       
+
+    /**
+     * @test
+     */
+    public function executeQuery()
+    {
         $exch = DriverTestManager::getExchange('StatementTest.executeQuery');
         $stmt = $this->conn->createStatement();
         $rs = $stmt->executeQuery($exch->getSql(), ResultSet::FETCHMODE_NUM);
         $rs->next();
-        
+
         $this->assertEquals(1, $rs->getInt(1));
-        
+
         $rs->close();
-        
+
         // make sure that getupdatecount returns null
-        
-        $this->assertTrue( ($stmt->getUpdateCount() === null), "Expected getUpdateCount() to return NULL since last statement was a query.");
+
+        $this->assertTrue((null === $stmt->getUpdateCount()), 'Expected getUpdateCount() to return NULL since last statement was a query.');
         $stmt->close();
     }
-    
-    public function testExecuteUpdate() {
+
+    /**
+     * @test
+     */
+    public function executeUpdate()
+    {
         $exch = DriverTestManager::getExchange('StatementTest.executeUpdate');
         $stmt = $this->conn->createStatement();
-        $stmt->executeUpdate($exch->getSql());        
-        $this->assertEquals(1, $stmt->getUpdateCount());        
-        $this->assertTrue( ($stmt->getResultSet() === null), "Expected getResultSet() to return NULL since last statement was an update.");
-        $stmt->close();        
+        $stmt->executeUpdate($exch->getSql());
+        $this->assertEquals(1, $stmt->getUpdateCount());
+        $this->assertTrue((null === $stmt->getResultSet()), 'Expected getResultSet() to return NULL since last statement was an update.');
+        $stmt->close();
     }
-    
-     public function testExecute() {    
-        
+
+    /**
+     * @test
+     */
+    public function execute()
+    {
         $exch = DriverTestManager::getExchange('StatementTest.executeUpdate');
         $stmt = $this->conn->createStatement();
         $res = $stmt->execute($exch->getSql());
-        $this->assertFalse($res, "Expected resulst of execute() to be FALSE because an update statement was executed (this is to match JDBC return values).");
+        $this->assertFalse($res, 'Expected resulst of execute() to be FALSE because an update statement was executed (this is to match JDBC return values).');
         $this->assertEquals(1, $stmt->getUpdateCount());
-        
+
         $exch = DriverTestManager::getExchange('StatementTest.executeQuery');
         $stmt = $this->conn->createStatement();
         $res = $stmt->execute($exch->getSql());
-        $this->assertTrue($res, "Expected resulst of execute() to be TRUE because a select query was executed (this is to match JDBC return values).");
-        $this->assertTrue($stmt->getResultSet() instanceof ResultSet, "Expected to be able to getResultSet() after call to execute() w/ SELECT query.");
+        $this->assertTrue($res, 'Expected resulst of execute() to be TRUE because a select query was executed (this is to match JDBC return values).');
+        $this->assertTrue($stmt->getResultSet() instanceof ResultSet, 'Expected to be able to getResultSet() after call to execute() w/ SELECT query.');
 
         $stmt->close();
     }
-    
 }

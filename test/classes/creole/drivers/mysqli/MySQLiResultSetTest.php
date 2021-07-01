@@ -24,35 +24,36 @@ require_once 'creole/ResultSetTest.php';
 /**
  * Tests for MySQLiResultSet.
  *
- *
  * @author Sebastian Bergmann <sb@sebastian-bergmann.de>
+ *
  * @version $Revision: 1.1 $
  */
-class MySQLiResultSetTest extends ResultSetTest {
-
-	/**
+class MySQLiResultSetTest extends ResultSetTest
+{
+    /**
      * Unfortunatley MySQL always applies rtrim() on strings ....
+     *
+     * @test
      */
-    public function testUntrimmedGet() {
-        
-		$str = "TEST    ";
-		
+    public function untrimmedGet()
+    {
+        $str = 'TEST    ';
+
         $exch = DriverTestManager::getExchange('ResultSetTest.setString.RTRIM');
         $stmt = $this->conn->prepareStatement($exch->getSql());
         $stmt->setString(1, $str);
         $stmt->setInt(2, 1);
         $stmt->executeUpdate();
         $stmt->close();
-                            
+
         $exch = DriverTestManager::getExchange('ResultSetTest.getString.RTRIM');
         $stmt = $this->conn->prepareStatement($exch->getSql());
         $stmt->setInt(1, 1);
         $rs = $stmt->executeQuery(ResultSet::FETCHMODE_NUM);
         $rs->next();
         $this->assertEquals(rtrim($str), $rs->getString(1));
-        
+
         $stmt->close();
         $rs->close();
     }
-    
 }

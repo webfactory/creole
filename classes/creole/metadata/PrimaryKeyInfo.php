@@ -20,27 +20,27 @@
  */
 
 /**
- * Represents a PrimaryKey
+ * Represents a PrimaryKey.
  *
  * @author    Hans Lellelid <hans@xmpl.org>
+ *
  * @version   $Revision: 1.6 $
- * @package   creole.metadata
  */
-class PrimaryKeyInfo {
-
+class PrimaryKeyInfo
+{
     /** name of the primary key */
     private $name;
 
     /** columns in the primary key */
-    private $columns = array();
+    private $columns = [];
 
     /** additional vendor specific information */
-    private $vendorSpecificInfo = array();
+    private $vendorSpecificInfo = [];
 
     /**
      * @param string $name The name of the foreign key.
      */
-    function __construct($name, $vendorInfo = array())
+    public function __construct($name, $vendorInfo = [])
     {
         $this->name = $name;
         $this->vendorSpecificInfo = $vendorInfo;
@@ -48,6 +48,7 @@ class PrimaryKeyInfo {
 
     /**
      * Get foreign key name.
+     *
      * @return string
      */
     public function getName()
@@ -57,6 +58,7 @@ class PrimaryKeyInfo {
 
     /**
      * @param Column $column
+     *
      * @return void
      */
     public function addColumn($column)
@@ -74,6 +76,7 @@ class PrimaryKeyInfo {
 
     /**
      * Get vendor specific optional information for this primary key.
+     *
      * @return array vendorSpecificInfo[]
      */
     public function getVendorSpecificInfo()

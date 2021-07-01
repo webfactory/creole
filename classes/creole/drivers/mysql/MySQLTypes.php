@@ -26,13 +26,13 @@ require_once 'creole/CreoleTypes.php';
  * MySQL types / type map.
  *
  * @author    Hans Lellelid <hans@xmpl.org>
+ *
  * @version   $Revision: 1.8 $
- * @package   creole.drivers.mysql
  */
-class MySQLTypes extends CreoleTypes {
-
+class MySQLTypes extends CreoleTypes
+{
     /** Map MySQL native types to Creole (JDBC) types. */
-    private static $typeMap = array(
+    private static $typeMap = [
                                 'tinyint' => CreoleTypes::TINYINT,
                                 'smallint' => CreoleTypes::SMALLINT,
                                 'mediumint' => CreoleTypes::SMALLINT,
@@ -62,7 +62,7 @@ class MySQLTypes extends CreoleTypes {
                                 'text' => CreoleTypes::LONGVARCHAR,
                                 'enum' => CreoleTypes::CHAR,
                                 'set' => CreoleTypes::CHAR,
-                                );
+                                ];
 
     /** Reverse mapping, created on demand. */
     private static $reverseMap = null;
@@ -70,7 +70,9 @@ class MySQLTypes extends CreoleTypes {
     /**
      * This method returns the generic Creole (JDBC-like) type
      * when given the native db type.
+     *
      * @param string $nativeType DB native type (e.g. 'TEXT', 'byetea', etc.).
+     *
      * @return int Creole native type (e.g. CreoleTypes::LONGVARCHAR, CreoleTypes::BINARY, etc.).
      */
     public static function getType($nativeType)
@@ -88,15 +90,17 @@ class MySQLTypes extends CreoleTypes {
      * Creole (JDBC-like) type.
      * If there is more than one matching native type, then the LAST defined
      * native type will be returned.
+     *
      * @param int $creoleType
+     *
      * @return string Native type string.
      */
     public static function getNativeType($creoleType)
     {
-        if (self::$reverseMap === null) {
+        if (null === self::$reverseMap) {
             self::$reverseMap = array_flip(self::$typeMap);
         }
+
         return @self::$reverseMap[$creoleType];
     }
-
 }

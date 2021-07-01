@@ -24,9 +24,10 @@ require_once 'creole/StatementTest.php';
 /**
  * Tests for MySQLiStatement.
  *
- *
  * @author Sebastian Bergmann <sb@sebastian-bergmann.de>
+ *
  * @version $Revision: 1.2 $
  */
-class MySQLiStatementTest extends StatementTest {
+class MySQLiStatementTest extends StatementTest
+{
 }

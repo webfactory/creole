@@ -1,7 +1,7 @@
 <?php
 
 /**
- *  $Id: OCI8Connection.php,v 1.18 2005/10/17 19:03:51 dlawson_mi Exp $
+ *  $Id: OCI8Connection.php,v 1.18 2005/10/17 19:03:51 dlawson_mi Exp $.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -19,98 +19,88 @@
  * and is licensed under the LGPL. For more information please see
  * <http://creole.phpdb.org>.
  */
- 
 require_once 'creole/Connection.php';
 require_once 'creole/common/ConnectionCommon.php';
 include_once 'creole/drivers/oracle/OCI8ResultSet.php';
 
 /**
  * Oracle implementation of Connection.
- * 
+ *
  * @author    David Giffin <david@giffin.org>
  * @author    Hans Lellelid <hans@xmpl.org>
- * @author    Stig Bakken <ssb@fast.no> 
+ * @author    Stig Bakken <ssb@fast.no>
  * @author    Lukas Smith
+ *
  * @version   $Revision: 1.18 $
- * @package   creole.drivers.oracle
- */ 
+ */
 class OCI8Connection extends ConnectionCommon implements Connection
-{        
-    protected $lastStmt			= null;    
+{
+    protected $lastStmt = null;
 
     /**
-     * Auto commit mode for oci_execute
+     * Auto commit mode for oci_execute.
+     *
      * @var int
      */
-    protected $execMode			= OCI_COMMIT_ON_SUCCESS;
+    protected $execMode = OCI_COMMIT_ON_SUCCESS;
 
     /**
      * Connect to a database and log in as the specified user.
      *
-     * @param array $dsn The data source hash.
-     * @param int $flags Any connection flags.
-     * @access public
+     * @param array $dsn   The data source hash.
+     * @param int   $flags Any connection flags.
+     *
      * @throws SQLException
+     *
      * @return void
      */
-    function connect( $dsninfo, $flags = 0 )
+    public function connect($dsninfo, $flags = 0)
     {
-        if ( !extension_loaded( 'oci8' ) )
-		{
-            throw new SQLException( 'oci8 extension not loaded' );
+        if (!extension_loaded('oci8')) {
+            throw new SQLException('oci8 extension not loaded');
         }
 
-        $this->dsn				= $dsninfo;
-        $this->flags			= $flags;
-        
-        $persistent				=
-			( $flags & Creole::PERSISTENT === Creole::PERSISTENT );
-        
-        $user					= $dsninfo[ 'username' ];
-        $pw						= $dsninfo[ 'password' ];
-        $hostspec				= $dsninfo[ 'hostspec' ];
-        $db					= $dsninfo[ 'database' ];
+        $this->dsn = $dsninfo;
+        $this->flags = $flags;
 
-        $connect_function		= ( $persistent )
-									? 'oci_pconnect'
-									: 'oci_connect';
-		
-		$encoding = !empty($dsninfo['encoding']) ? $dsninfo['encoding'] : null;
-		
-		@ini_set( 'track_errors', true );
+        $persistent =
+            ($flags & Creole::PERSISTENT === Creole::PERSISTENT);
 
-        if ( $db && $hostspec && $user && $pw )
-	{
-			$conn				= @$connect_function( $user, $pw, "//$hostspec/$db", $encoding);
-	}
-        elseif ( $hostspec && $user && $pw )
-		{
-			$conn				= @$connect_function( $user, $pw, $hostspec, $encoding );
-        }
-		
-		elseif ( $user || $pw )
-		{
-			$conn				= @$connect_function( $user, $pw, null, $encoding );
-        }
-		
-		else
-		{
-			$conn				= false;
+        $user = $dsninfo['username'];
+        $pw = $dsninfo['password'];
+        $hostspec = $dsninfo['hostspec'];
+        $db = $dsninfo['database'];
+
+        $connect_function = ($persistent)
+                                    ? 'oci_pconnect'
+                                    : 'oci_connect';
+
+        $encoding = !empty($dsninfo['encoding']) ? $dsninfo['encoding'] : null;
+
+        @ini_set('track_errors', true);
+
+        if ($db && $hostspec && $user && $pw) {
+            $conn = @$connect_function($user, $pw, "//$hostspec/$db", $encoding);
+        } elseif ($hostspec && $user && $pw) {
+            $conn = @$connect_function($user, $pw, $hostspec, $encoding);
+        } elseif ($user || $pw) {
+            $conn = @$connect_function($user, $pw, null, $encoding);
+        } else {
+            $conn = false;
         }
 
-        @ini_restore( 'track_errors' );
-        
-        if ( $conn == false )
-		{
-            $error				= oci_error();
-            $error				= ( is_array( $error ) )
-									? $error[ 'message' ]
-									: null;
+        @ini_restore('track_errors');
 
-            throw new SQLException( 'connect failed', $error );
+        if (false == $conn) {
+            $error = oci_error();
+            $error = (is_array($error))
+                                    ? $error['message']
+                                    : null;
+
+            throw new SQLException('connect failed', $error);
         }
 
-        $this->dblink			= $conn;
+        $this->dblink = $conn;
 
         //connected ok, need to set a few environment settings
         //please note, if this is changed, the function setTimestamp and setDate in OCI8PreparedStatement.php
@@ -119,225 +109,192 @@ class OCI8Connection extends ConnectionCommon implements Connection
         $this->executeQuery($sql);
     }
 
-
     /**
      * @see Connection::disconnect()
      */
-    function close()
+    public function close()
     {
-        $ret = @oci_close( $this->dblink );
+        $ret = @oci_close($this->dblink);
         $this->dblink = null;
+
         return $ret;
-    }        
-    
+    }
+
     /**
      * @see Connection::executeQuery()
      */
-    function executeQuery( $sql, $fetchmode = null )
+    public function executeQuery($sql, $fetchmode = null)
     {
-        $this->lastQuery		= $sql;
+        $this->lastQuery = $sql;
 
         // $result = @oci_parse( $this->dblink, $sql );
-        $result					= oci_parse( $this->dblink, $sql );
+        $result = oci_parse($this->dblink, $sql);
 
-        if ( ! $result )
-		{
-            throw new SQLException( 'Unable to prepare query'
-				, $this->nativeError()
-				, $sql
-			);
+        if (!$result) {
+            throw new SQLException('Unable to prepare query', $this->nativeError(), $sql);
         }
 
-        $success				= oci_execute( $result, $this->execMode );
+        $success = oci_execute($result, $this->execMode);
 
-        if ( ! $success )
-		{
-            throw new SQLException( 'Unable to execute query'
-				, $this->nativeError( $result )
-				, $sql
-			);
+        if (!$success) {
+            throw new SQLException('Unable to execute query', $this->nativeError($result), $sql);
         }
-        
-        return new OCI8ResultSet( $this, $result, $fetchmode );
+
+        return new OCI8ResultSet($this, $result, $fetchmode);
     }
 
-    
     /**
      * @see Connection::simpleUpdate()
      */
-    
-    function executeUpdate( $sql )
-    {    
-        $this->lastQuery		= $sql;
+    public function executeUpdate($sql)
+    {
+        $this->lastQuery = $sql;
 
-        $statement				= oci_parse( $this->dblink, $sql );
-		
-        if ( ! $statement )
-		{
-            throw new SQLException( 'Unable to prepare update'
-				, $this->nativeError()
-				, $sql
-			);
-        }
-                
-        $success				= oci_execute( $statement, $this->execMode );
+        $statement = oci_parse($this->dblink, $sql);
 
-        if ( ! $success )
-		{
-            throw new SQLException( 'Unable to execute update'
-				, $this->nativeError( $statement )
-				, $sql
-			);
+        if (!$statement) {
+            throw new SQLException('Unable to prepare update', $this->nativeError(), $sql);
         }
 
-        $this->lastStmt			= $statement;
+        $success = oci_execute($statement, $this->execMode);
 
-        return oci_num_rows( $statement );
+        if (!$success) {
+            throw new SQLException('Unable to execute update', $this->nativeError($statement), $sql);
+        }
+
+        $this->lastStmt = $statement;
+
+        return oci_num_rows($statement);
     }
 
     /**
      * Start a database transaction.
+     *
      * @throws SQLException
+     *
      * @return void
      */
     protected function beginTrans()
     {
-        $this->execMode			= OCI_DEFAULT;
+        $this->execMode = OCI_DEFAULT;
     }
-        
+
     /**
      * Commit the current transaction.
+     *
      * @throws SQLException
+     *
      * @return void
      */
     protected function commitTrans()
     {
-        $result					= oci_commit( $this->dblink );
+        $result = oci_commit($this->dblink);
 
-        if ( ! $result )
-		{
-            throw new SQLException( 'Unable to commit transaction'
-				, $this->nativeError()
-			);
+        if (!$result) {
+            throw new SQLException('Unable to commit transaction', $this->nativeError());
         }
 
-        $this->execMode			= OCI_COMMIT_ON_SUCCESS;
+        $this->execMode = OCI_COMMIT_ON_SUCCESS;
     }
 
-    
     /**
      * Roll back ( undo ) the current transaction.
+     *
      * @throws SQLException
+     *
      * @return void
      */
     protected function rollbackTrans()
     {
-        $result					= oci_rollback( $this->dblink );
+        $result = oci_rollback($this->dblink);
 
-        if ( ! $result )
-		{
-            throw new SQLException( 'Unable to rollback transaction'
-				, $this->nativeError()
-			);
+        if (!$result) {
+            throw new SQLException('Unable to rollback transaction', $this->nativeError());
         }
 
-        $this->execMode			= OCI_COMMIT_ON_SUCCESS;
+        $this->execMode = OCI_COMMIT_ON_SUCCESS;
     }
 
-    
     /**
      * Gets the number of rows affected by the data manipulation
      * query.
      *
      * @return int Number of rows affected by the last query.
+     *
      * @todo -cOCI8Connection Figure out whether getUpdateCount() should throw exception on error or just return 0.
      */
-    function getUpdateCount()
+    public function getUpdateCount()
     {
-        if ( ! $this->lastStmt )
-		{
+        if (!$this->lastStmt) {
             return 0;
         }
 
-        $result					= oci_num_rows( $this->lastStmt );
+        $result = oci_num_rows($this->lastStmt);
 
-        if ( $result === false )
-		{
-            throw new SQLException( 'Update count failed'
-				, $this->nativeError( $this->lastStmt )
-			);
+        if (false === $result) {
+            throw new SQLException('Update count failed', $this->nativeError($this->lastStmt));
         }
 
         return $result;
     }
 
+    /**
+     * Build Oracle-style query with limit or offset.
+     * If the original SQL is in variable: query then the requlting
+     * SQL looks like this:
+     * <pre>
+     * SELECT B.* FROM (
+     *          SELECT A.*, rownum as TORQUE$ROWNUM FROM (
+     *                  query
+     *           ) A
+     *      ) B WHERE B.TORQUE$ROWNUM > offset AND B.TORQUE$ROWNUM
+     *     <= offset + limit
+     * </pre>.
+     *
+     * @param string &$sql   the query
+     * @param int    $offset
+     * @param int    $limit
+     *
+     * @return void ( $sql parameter is currently manipulated directly )
+     */
+    public function applyLimit(&$sql, $offset, $limit)
+    {
+        $sql =
+            'SELECT B.* FROM (  '
+            .'SELECT A.*, rownum AS CREOLE$ROWNUM FROM (  '
+            .$sql
+            .'  ) A '
+            .' ) B WHERE ';
 
-   /**
-    * Build Oracle-style query with limit or offset.
-    * If the original SQL is in variable: query then the requlting
-    * SQL looks like this:
-    * <pre>
-    * SELECT B.* FROM ( 
-    *          SELECT A.*, rownum as TORQUE$ROWNUM FROM ( 
-    *                  query
-    *           ) A
-    *      ) B WHERE B.TORQUE$ROWNUM > offset AND B.TORQUE$ROWNUM
-    *     <= offset + limit
-    * </pre>
-    *
-    * @param string &$sql the query
-    * @param int $offset
-    * @param int $limit
-    * @return void ( $sql parameter is currently manipulated directly )
-    */
-   public function applyLimit( &$sql, $offset, $limit )
-   {
-        $sql					=
-			'SELECT B.* FROM (  '
-			.  'SELECT A.*, rownum AS CREOLE$ROWNUM FROM (  '
-			. $sql
-			. '  ) A '
-			.  ' ) B WHERE ';
+        if ($offset > 0) {
+            $sql .= ' B.CREOLE$ROWNUM > '.$offset;
 
-        if ( $offset > 0 )
-		{
-            $sql				.= ' B.CREOLE$ROWNUM > ' . $offset;            
-
-            if ( $limit > 0 )
-			{
-                $sql			.= ' AND B.CREOLE$ROWNUM <= '
-									. ( $offset + $limit );
+            if ($limit > 0) {
+                $sql .= ' AND B.CREOLE$ROWNUM <= '
+                                    .($offset + $limit);
             }
+        } else {
+            $sql .= ' B.CREOLE$ROWNUM <= '.$limit;
         }
-
-		else
-		{
-			$sql				.= ' B.CREOLE$ROWNUM <= ' . $limit;
-		}
-   } 
+    }
 
     /**
      * Get the native Oracle Error Message as a string.
      *
-     * @param string $msg The Internal Error Message
-     * @param mixed $errno The Oracle Error resource
+     * @param string $msg   The Internal Error Message
+     * @param mixed  $errno The Oracle Error resource
      */
-    public function nativeError( $result = null )
-	{
-		if ( $result !== null )
-		{
-			$error				= oci_error( $result );
-		}
-	
-		else
-		{
-			$error				= oci_error( $this->dblink );
-		}         
+    public function nativeError($result = null)
+    {
+        if (null !== $result) {
+            $error = oci_error($result);
+        } else {
+            $error = oci_error($this->dblink);
+        }
 
-		return $error[ 'code' ] . ': ' . $error[ 'message' ];
-	}
-    
-    
+        return $error['code'].': '.$error['message'];
+    }
+
     /**
      * @see Connection::getDatabaseInfo()
      */
@@ -345,9 +302,9 @@ class OCI8Connection extends ConnectionCommon implements Connection
     {
         require_once 'creole/drivers/oracle/metadata/OCI8DatabaseInfo.php';
 
-        return new OCI8DatabaseInfo( $this );
+        return new OCI8DatabaseInfo($this);
     }
-    
+
     /**
      * @see Connection::getIdGenerator()
      */
@@ -355,32 +312,33 @@ class OCI8Connection extends ConnectionCommon implements Connection
     {
         require_once 'creole/drivers/oracle/OCI8IdGenerator.php';
 
-        return new OCI8IdGenerator( $this );
+        return new OCI8IdGenerator($this);
     }
-    
+
     /**
      * Oracle supports native prepared statements, but the oci_parse call
      * is actually called by the OCI8PreparedStatement class because
      * some additional SQL processing may be necessary ( e.g. to apply limit ).
+     *
      * @see OCI8PreparedStatement::executeQuery()
      * @see OCI8PreparedStatement::executeUpdate()
      * @see Connection::prepareStatement()
      */
-    public function prepareStatement( $sql ) 
+    public function prepareStatement($sql)
     {
         require_once 'creole/drivers/oracle/OCI8PreparedStatement.php';
 
-        return new OCI8PreparedStatement( $this, $sql );
+        return new OCI8PreparedStatement($this, $sql);
     }
-    
+
     /**
      * @see Connection::prepareCall()
      */
-    public function prepareCall( $sql )
-	{
-        throw new SQLException( 'Oracle driver does not yet support stored procedures using CallableStatement.' );
+    public function prepareCall($sql)
+    {
+        throw new SQLException('Oracle driver does not yet support stored procedures using CallableStatement.');
     }
-    
+
     /**
      * @see Connection::createStatement()
      */
@@ -388,6 +346,6 @@ class OCI8Connection extends ConnectionCommon implements Connection
     {
         require_once 'creole/drivers/oracle/OCI8Statement.php';
 
-        return new OCI8Statement( $this );
+        return new OCI8Statement($this);
     }
 }

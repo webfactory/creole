@@ -18,44 +18,45 @@
  * and is licensed under the LGPL. For more information please see
  * <http://creole.phpdb.org>.
  */
- 
+
 require_once 'creole/PreparedStatement.php';
 require_once 'creole/common/PreparedStatementCommon.php';
 
 /**
  * MySQL subclass for prepared statements.
- * 
+ *
  * @author    Hans Lellelid <hans@xmpl.org>
+ *
  * @version   $Revision: 1.7 $
- * @package   creole.drivers.sqlite
  */
-class SQLitePreparedStatement extends PreparedStatementCommon implements PreparedStatement {
-    
+class SQLitePreparedStatement extends PreparedStatementCommon implements PreparedStatement
+{
     /**
      * Quotes string using native sqlite_escape_string() function.
+     *
      * @see ResultSetCommon::escape()
      */
     protected function escape($str)
     {
         return sqlite_escape_string($str);
     }
-    
+
     /**
      * Applies sqlite_udf_encode_binary() to ensure that binary contents will be handled correctly by sqlite.
+     *
      * @see PreparedStatement::setBlob()
      * @see ResultSet::getBlob()
      */
-    function setBlob($paramIndex, $blob) 
-    {    
-        if ($blob === null) {
+    public function setBlob($paramIndex, $blob)
+    {
+        if (null === $blob) {
             $this->setNull($paramIndex);
         } else {
             // they took magic __toString() out of PHP5.0.0; this sucks
             if (is_object($blob)) {
                 $blob = $blob->__toString();
             }
-            $this->boundInVars[$paramIndex] = "'" . sqlite_udf_encode_binary( $blob ) . "'";
+            $this->boundInVars[$paramIndex] = "'".sqlite_udf_encode_binary($blob)."'";
         }
     }
-    
 }

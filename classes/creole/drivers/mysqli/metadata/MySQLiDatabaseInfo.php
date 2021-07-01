@@ -25,24 +25,26 @@ require_once 'creole/metadata/DatabaseInfo.php';
  * MySQLi implementation of DatabaseInfo.
  *
  * @author    Sebastian Bergmann <sb@sebastian-bergmann.de>
+ *
  * @version   $Revision: 1.3 $
- * @package   creole.drivers.mysqli.metadata
  */
-class MySQLiDatabaseInfo extends DatabaseInfo {
+class MySQLiDatabaseInfo extends DatabaseInfo
+{
     /**
      * @throws SQLException
+     *
      * @return void
      */
     protected function initTables()
     {
         include_once 'creole/drivers/mysqli/metadata/MySQLiTableInfo.php';
-        
-        $result = @mysqli_query($this->conn->getResource(), 'SHOW TABLES FROM ' . $this->dbname);
-    
+
+        $result = @mysqli_query($this->conn->getResource(), 'SHOW TABLES FROM '.$this->dbname);
+
         if (!$result) {
-            throw new SQLException("Could not list tables", mysqli_error($this->conn->getResource()));
+            throw new SQLException('Could not list tables', mysqli_error($this->conn->getResource()));
         }
-        
+
         while ($row = mysqli_fetch_row($result)) {
             $this->tables[strtoupper($row[0])] = new MySQLiTableInfo($this, $row[0]);
         }
@@ -52,6 +54,7 @@ class MySQLiDatabaseInfo extends DatabaseInfo {
      * MySQL does not support sequences.
      *
      * @return void
+     *
      * @throws SQLException
      */
     protected function initSequences()

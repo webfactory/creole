@@ -25,10 +25,11 @@ require_once 'creole/metadata/TableInfo.php';
  * MySQLi implementation of TableInfo.
  *
  * @author    Sebastian Bergmann <sb@sebastian-bergmann.de>
+ *
  * @version   $Revision: 1.3 $
- * @package   creole.drivers.mysqli.metadata
  */
-class MySQLiTableInfo extends TableInfo {
+class MySQLiTableInfo extends TableInfo
+{
     /** Loads the columns for this table. */
     protected function initColumns()
     {
@@ -37,16 +38,16 @@ class MySQLiTableInfo extends TableInfo {
 
         // To get all of the attributes we need, we use
         // the MySQL "SHOW COLUMNS FROM $tablename" SQL.
-        $res = mysqli_query($this->conn->getResource(), "SHOW COLUMNS FROM " . $this->name);
+        $res = mysqli_query($this->conn->getResource(), 'SHOW COLUMNS FROM '.$this->name);
 
-        $defaults = array();
-        $nativeTypes = array();
-        $precisions = array();
+        $defaults = [];
+        $nativeTypes = [];
+        $precisions = [];
 
-        while($row = mysqli_fetch_assoc($res)) {
+        while ($row = mysqli_fetch_assoc($res)) {
             $name = $row['Field'];
             $default = $row['Default'];
-            $is_nullable = ($row['Null'] == 'YES');
+            $is_nullable = ('YES' == $row['Null']);
 
             $size = null;
             $precision = null;
@@ -56,7 +57,7 @@ class MySQLiTableInfo extends TableInfo {
                 //            colname[1]   size/precision[2]
                 $nativeType = $matches[1];
                 if ($matches[2]) {
-                    if ( ($cpos = strpos($matches[2], ',')) !== false) {
+                    if (($cpos = strpos($matches[2], ',')) !== false) {
                         $size = (int) substr($matches[2], 0, $cpos);
                         $precision = $size;
                         $scale = (int) substr($matches[2], $cpos + 1);
@@ -87,51 +88,53 @@ class MySQLiTableInfo extends TableInfo {
         }
 
         // Primary Keys
-        $res = mysqli_query($this->conn->getResource(), "SHOW KEYS FROM " . $this->name);
+        $res = mysqli_query($this->conn->getResource(), 'SHOW KEYS FROM '.$this->name);
 
         // Loop through the returned results, grouping the same key_name together
         // adding each column for that key.
-        while($row = mysqli_fetch_assoc($res)) {
-            $name = $row["Column_name"];
+        while ($row = mysqli_fetch_assoc($res)) {
+            $name = $row['Column_name'];
             if (!isset($this->primaryKey)) {
                 $this->primaryKey = new PrimaryKeyInfo($name);
             }
 
-            $this->primaryKey->addColumn($this->columns[ $name ]);
+            $this->primaryKey->addColumn($this->columns[$name]);
         }
 
         $this->pkLoaded = true;
     }
 
     /** Loads the indexes for this table. */
-    protected function initIndexes() {
+    protected function initIndexes()
+    {
         require_once 'creole/metadata/IndexInfo.php';
 
         // columns have to be loaded first
         if (!$this->colsLoaded) {
             $this->initColumns();
         }
-        
+
         // Indexes
-        $res = mysqli_query($this->conn->getResource(), "SHOW INDEX FROM " . $this->name);
+        $res = mysqli_query($this->conn->getResource(), 'SHOW INDEX FROM '.$this->name);
 
         // Loop through the returned results, grouping the same key_name together
         // adding each column for that key.
-        while($row = mysqli_fetch_assoc($res)) {
-            $name = $row["Column_name"];
+        while ($row = mysqli_fetch_assoc($res)) {
+            $name = $row['Column_name'];
 
             if (!isset($this->indexes[$name])) {
                 $this->indexes[$name] = new IndexInfo($name);
             }
 
-            $this->indexes[$name]->addColumn($this->columns[ $name ]);
+            $this->indexes[$name]->addColumn($this->columns[$name]);
         }
 
         $this->indexesLoaded = true;
     }
 
     /** Load foreign keys (unsupported in MySQL). */
-    protected function initForeignKeys() {
+    protected function initForeignKeys()
+    {
         // columns have to be loaded first
         if (!$this->colsLoaded) {
             $this->initColumns();

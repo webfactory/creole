@@ -18,22 +18,22 @@
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the LGPL. For more information please see
  * <http://creole.phpdb.org>.
- * 
- * This product includes software based on the Village framework,  
+ *
+ * This product includes software based on the Village framework,
  * http://share.whichever.com/index.php?SCREEN=village.
  */
 
 /**
  * A KeyDef is a way to define the key columns in a table.
- * 
- * The KeyDef is generally used in conjunction with a TableDataSet. 
+ *
+ * The KeyDef is generally used in conjunction with a TableDataSet.
  * Essentially a KeyDef is what forms the WHERE clause for an UPDATE or DELETE.
- * 
+ *
  * In order to use the KeyDef, you simply use it like this:
  * <code>
  * $kd = new KeyDef()
  * $kd->addAttrib("key_column_a");
- * 
+ *
  * $tds = new TableDataSet($conn, "table", $kd);
  * $tds->fetchRecords();
  * $rec = $tds->getRecord(0);
@@ -41,33 +41,33 @@
  * $rec->save();
  * $tds->close();
  * </code>
- * 
- * In the above example, Record 0 is retrieved from the database table 
+ *
+ * In the above example, Record 0 is retrieved from the database table
  * and the following update statement is generated:
  * <pre>
  * UPDATE table SET column_name=? WHERE key_column_a=?
  * </pre>
- * 
+ *
  * @see TableDataSet::doUpdate()
  * @see TableDataSet::doDelete()
  * @see TableDataSet::refresh()
  *
  * @author    Jon S. Stevens <jon@latchkey.com> (Village)
  * @author    Hans Lellelid <hans@xmpl.org> (Jargon)
+ *
  * @version   $Revision: 1.3 $
- * @package   jargon
  */
-class KeyDef {
-    
+class KeyDef
+{
     /** @var array Array of key column names */
-    private $cols;        
-        
+    private $cols;
+
     /** Number of columns. */
     private $size;
 
     /**
      * Construct a keydef.
-     * 
+     *
      * Accepts a variable number of arguments -- a list
      * of coluns to use for keydef:
      * <code>
@@ -80,23 +80,28 @@ class KeyDef {
         $this->cols = func_get_args();
         $this->size = count($this->cols);
     }
-    
+
     /**
      * Adds the named attribute to the KeyDef.
+     *
      * @param string $name
+     *
      * @return KeyDef The modified class.
      */
     public function addAttrib($name)
     {
         $this->cols[] = $name;
-        $this->size++;
+        ++$this->size;
+
         return $this;
     }
 
     /**
      * Determines if the KeyDef contains the requested Attribute.
+     *
      * @param string $name
-     * @return boolean True if the attribute has been defined. false otherwise.
+     *
+     * @return bool True if the attribute has been defined. false otherwise.
      */
     public function containsAttrib($name)
     {
@@ -105,23 +110,29 @@ class KeyDef {
 
     /**
      * getAttrib is 1 based. Setting pos to 0 will attempt to return pos 1.
+     *
      * @param int $pos 1-based position of attrib.
+     *
      * @return string Value of attribute at pos as String. null if value is not found.
      */
     public function getAttrib($pos)
     {
-        if ($pos === 0) $pos = 1;
+        if (0 === $pos) {
+            $pos = 1;
+        }
+
         return @$this->cols[$pos - 1];
     }
 
     /**
      * Returns number of columns in KeyDef.
+     *
      * @return int The number of elements in the KeyDef that were set by addAttrib()
+     *
      * @see addAttrib()
      */
     public function size()
     {
         return $this->size;
     }
-    
 }

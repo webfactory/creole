@@ -26,8 +26,9 @@ require_once 'creole/common/StatementCommon.php';
  * MySQLi implementation of Statement.
  *
  * @author    Sebastian Bergmann <sb@sebastian-bergmann.de>
+ *
  * @version   $Revision: 1.2 $
- * @package   creole.drivers.mysqli
  */
-class MySQLiStatement extends StatementCommon implements Statement {
+class MySQLiStatement extends StatementCommon implements Statement
+{
 }

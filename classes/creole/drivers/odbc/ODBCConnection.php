@@ -27,19 +27,21 @@ require_once 'creole/drivers/odbc/adapters/ODBCAdapter.php';
  * ODBC implementation of Connection.
  *
  * @author    Dave Lawson <dlawson@masterytech.com>
+ *
  * @version   $Revision: 1.6 $
- * @package   creole.drivers.odbc
  */
-class ODBCConnection extends ConnectionCommon implements Connection {
-
+class ODBCConnection extends ConnectionCommon implements Connection
+{
     /**
-     * Implements driver-specific behavior
+     * Implements driver-specific behavior.
+     *
      * @var ODBCAdapter
      */
     protected $adapter = null;
 
     /**
-     * Last ODBC result resource from executeQuery/executeUpdate. Used in getUpdateCount()
+     * Last ODBC result resource from executeQuery/executeUpdate. Used in getUpdateCount().
+     *
      * @var ODBCResultResource
      */
     protected $odbcresult = null;
@@ -49,38 +51,40 @@ class ODBCConnection extends ConnectionCommon implements Connection {
      */
     public function connect($dsninfo, $flags = 0)
     {
-		if (!function_exists('odbc_connect'))
+        if (!function_exists('odbc_connect')) {
             throw new SQLException('odbc extension not loaded');
+        }
 
         $adapterclass = isset($dsninfo['adapter']) ? $dsninfo['adapter'] : null;
 
-        if (!$adapterclass)
+        if (!$adapterclass) {
             $adapterclass = 'ODBCAdapter';
-        else
+        } else {
             $adapterclass .= 'Adapter';
+        }
 
-        Creole::import('creole.drivers.odbc.adapters.' . $adapterclass);
+        Creole::import('creole.drivers.odbc.adapters.'.$adapterclass);
         $this->adapter = new $adapterclass();
 
         $this->dsn = $dsninfo;
         $this->flags = $flags;
 
-        if ( !($this->flags & Creole::COMPAT_ASSOC_LOWER) && !$this->adapter->preservesColumnCase())
-        {
-            trigger_error('Connection created without Creole::COMPAT_ASSOC_LOWER, ' .
+        if (!($this->flags & Creole::COMPAT_ASSOC_LOWER) && !$this->adapter->preservesColumnCase()) {
+            trigger_error('Connection created without Creole::COMPAT_ASSOC_LOWER, '.
                           'but driver does not support case preservation.',
                           E_USER_WARNING);
-            $this->flags != Creole::COMPAT_ASSOC_LOWER;
+            Creole::COMPAT_ASSOC_LOWER != $this->flags;
         }
 
         $persistent = ($flags & Creole::PERSISTENT) === Creole::PERSISTENT;
 
-        if ($dsninfo['database'])
+        if ($dsninfo['database']) {
             $odbcdsn = $dsninfo['database'];
-        elseif ($dsninfo['hostspec'])
+        } elseif ($dsninfo['hostspec']) {
             $odbcdsn = $dsninfo['hostspec'];
-        else
+        } else {
             $odbcdsn = 'localhost';
+        }
 
         $user = @$dsninfo['username'];
         $pw = @$dsninfo['password'];
@@ -89,12 +93,13 @@ class ODBCConnection extends ConnectionCommon implements Connection {
 
         $conn = @$connect_function($odbcdsn, $user, $pw, SQL_CUR_USE_IF_NEEDED);
 
-        if (!is_resource($conn))
+        if (!is_resource($conn)) {
             throw new SQLException('connect failed', $this->nativeError(), $odbcdsn);
+        }
 
         $this->dblink = $conn;
 
-        /**
+        /*
          * This prevents blob fields from being fetched when a row is loaded
          * from a recordset. Clob fields however are loaded with up to
          * 'odbc.defaultlrl' data. This should be the default anyway, but we'll
@@ -114,8 +119,7 @@ class ODBCConnection extends ConnectionCommon implements Connection {
         $this->adapter = null;
         $this->odbcresult = null;
 
-        if ($this->dblink !== null)
-        {
+        if (null !== $this->dblink) {
             $ret = @odbc_close($this->dblink);
             $this->dblink = null;
         }
@@ -133,20 +137,23 @@ class ODBCConnection extends ConnectionCommon implements Connection {
 
     /**
      * Returns a formatted ODBC error string.
+     *
      * @return string
      */
     public function nativeError()
     {
-        if ($this->dblink && is_resource($this->dblink))
-            $errstr = '[' . @odbc_error($this->dblink) . '] ' . @odbc_errormsg($this->dblink);
-        else
-            $errstr = '[' . @odbc_error() . '] ' . @odbc_errormsg();
+        if ($this->dblink && is_resource($this->dblink)) {
+            $errstr = '['.@odbc_error($this->dblink).'] '.@odbc_errormsg($this->dblink);
+        } else {
+            $errstr = '['.@odbc_error().'] '.@odbc_errormsg();
+        }
 
         return $errstr;
     }
 
     /**
      * Returns driver-specific ODBCAdapter.
+     *
      * @return ODBCAdapter
      */
     public function getAdapter()
@@ -160,6 +167,7 @@ class ODBCConnection extends ConnectionCommon implements Connection {
     public function getDatabaseInfo()
     {
         require_once 'creole/drivers/odbc/metadata/ODBCDatabaseInfo.php';
+
         return new ODBCDatabaseInfo($this);
     }
 
@@ -172,7 +180,8 @@ class ODBCConnection extends ConnectionCommon implements Connection {
     }
 
     /**
-     * Creates the appropriate ResultSet
+     * Creates the appropriate ResultSet.
+     *
      * @return ResultSet
      */
     public function createResultSet($odbcresult, $fetchmode)
@@ -186,6 +195,7 @@ class ODBCConnection extends ConnectionCommon implements Connection {
     public function prepareStatement($sql)
     {
         require_once 'creole/drivers/odbc/ODBCPreparedStatement.php';
+
         return new ODBCPreparedStatement($this, $sql);
     }
 
@@ -195,11 +205,13 @@ class ODBCConnection extends ConnectionCommon implements Connection {
     public function createStatement()
     {
         require_once 'creole/drivers/odbc/ODBCStatement.php';
+
         return new ODBCStatement($this);
     }
 
     /**
      * @todo To be implemented
+     *
      * @see Connection::prepareCall()
      */
     public function prepareCall($sql)
@@ -212,8 +224,9 @@ class ODBCConnection extends ConnectionCommon implements Connection {
      */
     public function applyLimit(&$sql, $offset, $limit)
     {
-        if ($this->adapter->hasLimitOffset())
+        if ($this->adapter->hasLimitOffset()) {
             $this->adapter->applyLimit($sql, $offset, $limit);
+        }
     }
 
     /**
@@ -221,13 +234,15 @@ class ODBCConnection extends ConnectionCommon implements Connection {
      */
     public function executeQuery($sql, $fetchmode = null)
     {
-        if ($this->odbcresult)
+        if ($this->odbcresult) {
             $this->odbcresult = null;
+        }
 
         $r = @odbc_exec($this->dblink, $sql);
 
-        if ($r === false)
+        if (false === $r) {
             throw new SQLException('Could not execute query', $this->nativeError(), $sql);
+        }
 
         $this->odbcresult = new ODBCResultResource($r);
 
@@ -239,13 +254,15 @@ class ODBCConnection extends ConnectionCommon implements Connection {
      */
     public function executeUpdate($sql)
     {
-        if ($this->odbcresult)
+        if ($this->odbcresult) {
             $this->odbcresult = null;
+        }
 
         $r = @odbc_exec($this->dblink, $sql);
 
-        if ($r === false)
+        if (false === $r) {
             throw new SQLException('Could not execute update', $this->nativeError(), $sql);
+        }
 
         $this->odbcresult = new ODBCResultResource($r);
 
@@ -254,22 +271,26 @@ class ODBCConnection extends ConnectionCommon implements Connection {
 
     /**
      * Start a database transaction.
+     *
      * @throws SQLException
+     *
      * @return void
      */
     protected function beginTrans()
     {
         if ($this->adapter->supportsTransactions()) {
             @odbc_autocommit($this->dblink, false);
-            if (odbc_error($this->dblink) == 'S1C00') {
+            if ('S1C00' == odbc_error($this->dblink)) {
                 throw new SQLException('Could not begin transaction', $this->nativeError());
             }
         }
     }
-    
+
     /**
      * Commit the current transaction.
+     *
      * @throws SQLException
+     *
      * @return void
      */
     protected function commitTrans()
@@ -280,7 +301,7 @@ class ODBCConnection extends ConnectionCommon implements Connection {
                 throw new SQLException('Could not commit transaction', $this->nativeError());
             }
             @odbc_autocommit($this->dblink, true);
-            if (odbc_error($this->dblink) == 'S1C00') {
+            if ('S1C00' == odbc_error($this->dblink)) {
                 throw new SQLException('Could not commit transaction (autocommit failed)', $this->nativeError());
             }
         }
@@ -288,7 +309,9 @@ class ODBCConnection extends ConnectionCommon implements Connection {
 
     /**
      * Roll back (undo) the current transaction.
+     *
      * @throws SQLException
+     *
      * @return void
      */
     protected function rollbackTrans()
@@ -299,7 +322,7 @@ class ODBCConnection extends ConnectionCommon implements Connection {
                 throw new SQLException('Could not rollback transaction', $this->nativeError());
             }
             @odbc_autocommit($this->dblink, true);
-            if (odbc_error($this->dblink) == 'S1C00') {
+            if ('S1C00' == odbc_error($this->dblink)) {
                 throw new SQLException('Could not rollback transaction (autocommit failed)', $this->nativeError());
             }
         }
@@ -310,17 +333,18 @@ class ODBCConnection extends ConnectionCommon implements Connection {
      */
     public function getUpdateCount()
     {
-        if ($this->odbcresult === null)
+        if (null === $this->odbcresult) {
             return 0;
+        }
 
         $n = @odbc_num_rows($this->odbcresult->getHandle());
 
-        if ($n == -1)
+        if (-1 == $n) {
             throw new SQLException('Could not retrieve update count', $this->nativeError());
+        }
 
         return (int) $n;
     }
-
 }
 
 /**
@@ -333,7 +357,6 @@ class ODBCConnection extends ConnectionCommon implements Connection {
  * odbc_free_result(). Using this class as a wrapper, we can pass around multiple
  * references to the same resource. PHP's reference counting mechanism will clean
  * up the resource when its no longer used via ODBCResultResource::__destruct().
- * @package   creole.drivers.odbc
  */
 class ODBCResultResource
 {
@@ -344,19 +367,20 @@ class ODBCResultResource
 
     public function __construct($handle)
     {
-        if (is_resource($handle))
+        if (is_resource($handle)) {
             $this->handle = $handle;
+        }
     }
 
     public function __destruct()
     {
-        if ($this->handle !== null)
+        if (null !== $this->handle) {
             @odbc_free_result($this->handle);
+        }
     }
 
     public function getHandle()
     {
         return $this->handle;
     }
-
 }

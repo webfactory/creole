@@ -18,39 +18,38 @@
  * and is licensed under the LGPL. For more information please see
  * <http://creole.phpdb.org>.
  */
- 
+
 require_once 'creole/IdGenerator.php';
 
 /**
  * PostgreSQL IdGenerator implemenation.
  *
  * @author    Hans Lellelid <hans@xmpl.org>
+ *
  * @version   $Revision: 1.5 $
- * @package   creole.drivers.pgsql
  */
-class PgSQLIdGenerator implements IdGenerator {
-    
+class PgSQLIdGenerator implements IdGenerator
+{
     /** Connection object that instantiated this class */
     private $conn;
 
     /**
      * Creates a new IdGenerator class, saves passed connection for use
      * later by getId() method.
-     * @param Connection $conn
      */
     public function __construct(Connection $conn)
     {
         $this->conn = $conn;
     }
-    
+
     /**
      * @see IdGenerator::isBeforeInsert()
      */
     public function isBeforeInsert()
     {
         return true;
-    }    
-    
+    }
+
     /**
      * @see IdGenerator::isAfterInsert()
      */
@@ -58,7 +57,7 @@ class PgSQLIdGenerator implements IdGenerator {
     {
         return false;
     }
-        
+
     /**
      * @see IdGenerator::getIdMethod()
      */
@@ -66,19 +65,18 @@ class PgSQLIdGenerator implements IdGenerator {
     {
         return self::SEQUENCE;
     }
-    
+
     /**
      * @see IdGenerator::getId()
      */
     public function getId($name = null)
     {
-        if ($name === null) {
-            throw new SQLException("You must specify the sequence name when calling getId() method.");
+        if (null === $name) {
+            throw new SQLException('You must specify the sequence name when calling getId() method.');
         }
-        $rs = $this->conn->executeQuery("SELECT nextval('" . pg_escape_string ( $name ) . "')", ResultSet::FETCHMODE_NUM);
+        $rs = $this->conn->executeQuery("SELECT nextval('".pg_escape_string($name)."')", ResultSet::FETCHMODE_NUM);
         $rs->next();
+
         return $rs->getInt(1);
     }
-    
 }
-

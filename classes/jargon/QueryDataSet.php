@@ -17,18 +17,18 @@
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the LGPL. For more information please see
  * <http://creole.phpdb.org>.
- * 
- * This product includes software based on the Village framework,  
+ *
+ * This product includes software based on the Village framework,
  * http://share.whichever.com/index.php?SCREEN=village.
  */
- 
+
 include_once 'jargon/DataSet.php';
- 
+
 /**
  * This class is used to represent the results of a SQL select statements on the database.
- * It should not be used for doing modifications via update/delete/insert statements. If you 
+ * It should not be used for doing modifications via update/delete/insert statements. If you
  * would like to perform those functions, please use a TableDataSet.
- * 
+ *
  * <code>
  * $qds = new QueryDataSet($conn, "SELECT * from my_table");
  * $qds->fetchRecords(10); // fetch the first 10 records
@@ -37,27 +37,27 @@ include_once 'jargon/DataSet.php';
  * }
  * $qds->close();
  * </code>
- * 
+ *
  * @author    Jon S. Stevens <jon@latchkey.com> (Village)
  * @author    Hans Lellelid <hans@xmpl.org> (Jargon)
+ *
  * @version   $Revision: 1.4 $
- * @package   jargon
  */
-class QueryDataSet extends DataSet {
-
+class QueryDataSet extends DataSet
+{
     /**
-     * Creates a new QueryDataSet based on a connection and a select string
+     * Creates a new QueryDataSet based on a connection and a select string.
      *
      * This class can be instantiated with a couple signatures:
      *    - new QueryDataSet($conn, "SELECT * FROM mytable");
      *    - new QueryDataSet($rs);
-     * 
-     * @param  mixed $p1 Connecton or ResultSet (depending on signature)
-     * @param  string $selectStmt SELECT SQL (only if $p1 is Connection)
+     *
+     * @param mixed  $p1         Connecton or ResultSet (depending on signature)
+     * @param string $selectStmt SELECT SQL (only if $p1 is Connection)
      */
-    public function __construct($p1, $selectSql = null) 
+    public function __construct($p1, $selectSql = null)
     {
-        if ($selectSql !== null) {
+        if (null !== $selectSql) {
             $this->conn = $p1;
             $this->selectSql = $selectSql;
         } else {
@@ -66,13 +66,12 @@ class QueryDataSet extends DataSet {
     }
 
     /**
-     * get the Select String that was used to create this QueryDataSet
+     * get the Select String that was used to create this QueryDataSet.
      *
-     * @return     a select string
+     * @return a select string
      */
     public function getSelectSql()
     {
         return $this->selectSql;
     }
-    
 }

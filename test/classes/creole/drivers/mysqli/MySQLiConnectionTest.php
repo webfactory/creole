@@ -24,24 +24,26 @@ require_once 'creole/ConnectionTest.php';
 /**
  * Tests for MySQLiConnection.
  *
- *
  * @author Sebastian Bergmann <sb@sebastian-bergmann.de>
+ *
  * @version $Revision: 1.3 $
  */
-class MySQLiConnectionTest extends ConnectionTest {
+class MySQLiConnectionTest extends ConnectionTest
+{
     private static $testTransactions = false;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         // check the table types
-        $sql = "SHOW TABLE STATUS";
+        $sql = 'SHOW TABLE STATUS';
         $rs = $this->conn->executeQuery($sql);
-        while($rs->next()) {
+        while ($rs->next()) {
             $row = $rs->getRow();
-            if ($row['name'] == 'products') {
+            if ('products' == $row['name']) {
                 if (isset($row['type']) &&
-                   ($row['type'] == 'InnoDB' || $row['Type'] == 'BDB')) {
+                   ('InnoDB' == $row['type'] || 'BDB' == $row['Type'])) {
                     self::$testTransactions = true;
                 }
 
@@ -52,19 +54,31 @@ class MySQLiConnectionTest extends ConnectionTest {
         $rs->close();
     }
 
-    public function testSetAutoCommit() {
+    /**
+     * @test
+     */
+    public function setAutoCommit()
+    {
         if (self::$testTransactions) {
             parent::testSetAutoCommit();
         }
     }
 
-    public function testCommit() {
+    /**
+     * @test
+     */
+    public function commit()
+    {
         if (self::$testTransactions) {
             parent::testCommit();
         }
     }
 
-    public function testRollback() {
+    /**
+     * @test
+     */
+    public function rollback()
+    {
         if (self::$testTransactions) {
             parent::testRollback();
         }
@@ -73,31 +87,34 @@ class MySQLiConnectionTest extends ConnectionTest {
     /**
      * Test the applyLimit() method.  By default this method will not modify the values provided.
      * Subclasses must override this method to test for appropriate SQL modifications.
+     *
+     * @test
      */
-    public function testApplyLimit() {
-      /*
-        if ( $limit > 0 ) {
-            $sql .= " LIMIT " . ($offset > 0 ? $offset . ", " : "") . $limit;
-        } else if ( $offset > 0 ) {
-            $sql .= " LIMIT " . $offset . ", 18446744073709551615";
-        }
-        */
+    public function applyLimit()
+    {
+        /*
+          if ( $limit > 0 ) {
+              $sql .= " LIMIT " . ($offset > 0 ? $offset . ", " : "") . $limit;
+          } else if ( $offset > 0 ) {
+              $sql .= " LIMIT " . $offset . ", 18446744073709551615";
+          }
+          */
 
         // offset AND limit
-        $sql = "SELECT * FROM sampletable WHERE category = 5";
+        $sql = 'SELECT * FROM sampletable WHERE category = 5';
 
         $sql1 = $sql;
         $this->conn->applyLimit($sql1, 5, 50);
-        $this->assertEquals("SELECT * FROM sampletable WHERE category = 5 LIMIT 5, 50", $sql1);
+        $this->assertEquals('SELECT * FROM sampletable WHERE category = 5 LIMIT 5, 50', $sql1);
 
         // limit only
         $sql2 = $sql;
         $this->conn->applyLimit($sql2, 0, 50);
-        $this->assertEquals("SELECT * FROM sampletable WHERE category = 5 LIMIT 50", $sql2);
+        $this->assertEquals('SELECT * FROM sampletable WHERE category = 5 LIMIT 50', $sql2);
 
         // offset only
         $sql3 = $sql;
         $this->conn->applyLimit($sql3, 5, 0);
-        $this->assertEquals("SELECT * FROM sampletable WHERE category = 5 LIMIT 5, 18446744073709551615", $sql3);
+        $this->assertEquals('SELECT * FROM sampletable WHERE category = 5 LIMIT 5, 18446744073709551615', $sql3);
     }
 }

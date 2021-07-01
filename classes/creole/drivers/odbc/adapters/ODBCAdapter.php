@@ -23,8 +23,8 @@
  * Default class for ODBC driver-specific behavior.
  *
  * @author    Dave Lawson <dlawson@masterytech.com>
+ *
  * @version   $Revision: 1.3 $
- * @package   creole.drivers.odbc
  */
 class ODBCAdapter
 {
@@ -33,7 +33,7 @@ class ODBCAdapter
      * is first created. Returns false if table does not preserve case (i.e.
      * ProductID => PRODUCTID).
      *
-     * @return boolean
+     * @return bool
      */
     public function preservesColumnCase()
     {
@@ -44,18 +44,18 @@ class ODBCAdapter
      * Returns true if prepared statements should be emulated. This
      * might be useful if your driver does not support (or has trouble with)
      * prepared statements.
-     * 
-     * @return boolean
+     *
+     * @return bool
      */
     public function emulatePrepareStmt()
     {
         return false;
     }
-    
+
     /**
      * Returns true if ODBC driver supports LIMIT/OFFSET via SQL.
      *
-     * @return boolean
+     * @return bool
      */
     public function hasLimitOffset()
     {
@@ -82,11 +82,12 @@ class ODBCAdapter
     /**
      * Returns an instance of the default resultset.
      *
-     * @return boolean
+     * @return bool
      */
     public function createResultSet($conn, $odbcresult, $fetchmode)
     {
         require_once 'creole/drivers/odbc/ODBCResultSet.php';
+
         return new ODBCResultSet($conn, $odbcresult, $fetchmode);
     }
 
@@ -98,18 +99,17 @@ class ODBCAdapter
     public function getIdGenerator($conn)
     {
         require_once 'creole/drivers/odbc/ODBCIdGenerator.php';
+
         return new ODBCIdGenerator($conn);
     }
 
     /**
      * Returns true if driver support transactions.
-     * 
-     * @return boolean
+     *
+     * @return bool
      */
     public function supportsTransactions()
     {
         return true;
     }
 }
-
-?>

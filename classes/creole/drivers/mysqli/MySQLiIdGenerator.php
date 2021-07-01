@@ -25,17 +25,17 @@ require_once 'creole/IdGenerator.php';
  * MySQLi implementation of IdGenerator.
  *
  * @author    Sebastian Bergmann <sb@sebastian-bergmann.de>
+ *
  * @version   $Revision: 1.4 $
- * @package   creole.drivers.mysqli
  */
-class MySQLiIdGenerator implements IdGenerator {
+class MySQLiIdGenerator implements IdGenerator
+{
     /** Connection object that instantiated this class */
     private $conn;
 
     /**
      * Creates a new IdGenerator class, saves passed connection for use
      * later by getId() method.
-     * @param Connection $conn
      */
     public function __construct(Connection $conn)
     {
@@ -80,12 +80,12 @@ class MySQLiIdGenerator implements IdGenerator {
         $resource = $this->conn->getResource();
         $insert_id = mysqli_insert_id($resource);
 
-        if ( $insert_id < 0 ) {
+        if ($insert_id < 0) {
             $insert_id = null;
 
             $result = mysqli_query($resource, 'SELECT LAST_INSERT_ID()');
 
-            if ( $result ) {
+            if ($result) {
                 $row = mysqli_fetch_row($result);
                 $insert_id = $row ? $row[0] : null;
             }

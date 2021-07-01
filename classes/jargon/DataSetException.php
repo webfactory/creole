@@ -18,17 +18,19 @@
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the LGPL. For more information please see
  * <http://creole.phpdb.org>.
- * 
- * This product includes software based on the Village framework,  
+ *
+ * This product includes software based on the Village framework,
  * http://share.whichever.com/index.php?SCREEN=village.
  */
 
 /**
  * A DataSetException represents exception specific to the DataSet/Record layer.
- * 
+ *
  * @author    Jon S. Stevens <jon@latchkey.com> (Village)
  * @author    Hans Lellelid <hans@xmpl.org> (Jargon)
+ *
  * @version   $Revision: 1.2 $
- * @package   jargon
  */
-class DataSetException extends Exception {}
+class DataSetException extends Exception
+{
+}

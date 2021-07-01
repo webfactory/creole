@@ -24,9 +24,10 @@ require_once 'creole/PreparedStatementTest.php';
 /**
  * Tests for MySQLiPreparedStatement.
  *
- *
  * @author Sebastian Bergmann <sb@sebastian-bergmann.de>
+ *
  * @version $Revision: 1.2 $
  */
-class MySQLiPreparedStatementTest extends PreparedStatementTest {
+class MySQLiPreparedStatementTest extends PreparedStatementTest
+{
 }

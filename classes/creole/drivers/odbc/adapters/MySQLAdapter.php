@@ -31,8 +31,8 @@ require_once 'creole/drivers/odbc/adapters/ODBCAdapter.php';
  * the ODBC driver.
  *
  * @author    Dave Lawson <dlawson@masterytech.com>
+ *
  * @version   $Revision: 1.1 $
- * @package   creole.drivers.odbc
  */
 class MySQLAdapter extends ODBCAdapter
 {
@@ -49,10 +49,10 @@ class MySQLAdapter extends ODBCAdapter
      */
     public function applyLimit(&$sql, $offset, $limit)
     {
-        if ( $limit > 0 ) {
-            $sql .= " LIMIT " . ($offset > 0 ? $offset . ", " : "") . $limit;
-        } else if ( $offset > 0 ) {
-            $sql .= " LIMIT " . $offset . ", 18446744073709551615";
+        if ($limit > 0) {
+            $sql .= ' LIMIT '.($offset > 0 ? $offset.', ' : '').$limit;
+        } elseif ($offset > 0) {
+            $sql .= ' LIMIT '.$offset.', 18446744073709551615';
         }
     }
 
@@ -72,7 +72,4 @@ class MySQLAdapter extends ODBCAdapter
 //        return new ODBCCachedResultSet($conn, $odbcresult, $fetchmode, true);
         return new ODBCResultSet($conn, $odbcresult, $fetchmode);
     }
-
 }
-
-?>

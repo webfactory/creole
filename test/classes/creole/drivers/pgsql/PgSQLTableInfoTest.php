@@ -5,14 +5,20 @@ require_once 'creole/metadata/TableInfoTest.php';
 /**
  * PgSQLTableInfoTest tests.
  *
- *
  * @author Hans Lellelid <hans@xmpl.org>
+ *
  * @version $Revision: 1.1 $
  */
-class PgSQLTableInfoTest extends TableInfoTest {
-	/** Test getting the products table */
-    public function testGetColumn() {
-        $table = $this->conn->getDatabaseInfo()->getTable("products");
+class PgSQLTableInfoTest extends TableInfoTest
+{
+    /**
+     * Test getting the products table.
+     *
+     * @test
+     */
+    public function getColumn()
+    {
+        $table = $this->conn->getDatabaseInfo()->getTable('products');
         $col = $table->getColumn('productid');
         $this->assertEquals($col->getName(), 'productid');
         $this->assertEquals($col->type, CreoleTypes :: INTEGER);
@@ -26,10 +32,13 @@ class PgSQLTableInfoTest extends TableInfoTest {
 
         //i think we need more tests for every type of column...
     }
-    
-    public function testGetColumn_Scale()
+
+    /**
+     * @test
+     */
+    public function getColumn_Scale()
     {
-    	$table = $this->conn->getDatabaseInfo()->getTable("products");
+        $table = $this->conn->getDatabaseInfo()->getTable('products');
         $col = $table->getColumn('unitprice');
         $this->assertEquals($col->getName(), 'unitprice');
         $this->assertEquals($col->getType(), CreoleTypes::NUMERIC);
@@ -37,20 +46,30 @@ class PgSQLTableInfoTest extends TableInfoTest {
         $this->assertEquals($col->getPrecision(), '12');
     }
 
-    /** Test getting the indexes */
-    public function testGetIndexes() {
-        $table = $this->conn->getDatabaseInfo()->getTable("indexes");
+    /**
+     * Test getting the indexes.
+     *
+     * @test
+     */
+    public function getIndexes()
+    {
+        $table = $this->conn->getDatabaseInfo()->getTable('indexes');
         $indexes = $table->getIndexes();
-        $this->assertEquals(sizeof($indexes), 3);//not including primary key!!!
+        $this->assertEquals(sizeof($indexes), 3); //not including primary key!!!
 
         $this->assertNotNull($this->findIndex($table, 'productnameidx'));
         $this->assertNotNull($this->findIndex($table, 'complexidx'));
         $this->assertNotNull($this->findIndex($table, 'uniquecomplexidx'));
     }
 
-    /** Test getting the complex indexes info */
-    public function testComplexIndexInfo() {
-        $table = $this->conn->getDatabaseInfo()->getTable("indexes");
+    /**
+     * Test getting the complex indexes info.
+     *
+     * @test
+     */
+    public function complexIndexInfo()
+    {
+        $table = $this->conn->getDatabaseInfo()->getTable('indexes');
 
         $index = $this->findIndex($table, 'complexidx');
         $columns = $index->getColumns();
@@ -62,9 +81,14 @@ class PgSQLTableInfoTest extends TableInfoTest {
         $this->assertFalse($index->isUnique());
     }
 
-    /** Test getting the unique indexes info */
-    public function testUniqueIndexInfo() {
-        $table = $this->conn->getDatabaseInfo()->getTable("indexes");
+    /**
+     * Test getting the unique indexes info.
+     *
+     * @test
+     */
+    public function uniqueIndexInfo()
+    {
+        $table = $this->conn->getDatabaseInfo()->getTable('indexes');
 
         $index = $this->findIndex($table, 'uniquecomplexidx');
         $columns = $index->getColumns();
@@ -72,19 +96,24 @@ class PgSQLTableInfoTest extends TableInfoTest {
         $this->assertTrue($index->isUnique());
     }
 
-    /** Test foreign key info */
-    public function testForeignKeyInfo() {
-        $table = $this->conn->getDatabaseInfo()->getTable("ref_table");
+    /**
+     * Test foreign key info.
+     *
+     * @test
+     */
+    public function foreignKeyInfo()
+    {
+        $table = $this->conn->getDatabaseInfo()->getTable('ref_table');
 
         $this->assertEquals(sizeof($table->getForeignKeys()), 2);
-        $refs = $table->getForeignKey("ref_table_fk_1")->getReferences();
+        $refs = $table->getForeignKey('ref_table_fk_1')->getReferences();
         $this->assertEquals(sizeof($refs), 1);
-        $this->assertEquals($refs[0][0]->getName(), "refid1");
-        $this->assertEquals($refs[0][1]->getName(), "uniquecol1");
+        $this->assertEquals($refs[0][0]->getName(), 'refid1');
+        $this->assertEquals($refs[0][1]->getName(), 'uniquecol1');
 
-        $refs = $table->getForeignKey("ref_table_fk_2")->getReferences();
+        $refs = $table->getForeignKey('ref_table_fk_2')->getReferences();
         $this->assertEquals(sizeof($refs), 1);
-        $this->assertEquals($refs[0][0]->getName(), "refid2");
-        $this->assertEquals($refs[0][1]->getName(), "uniquecol2");
+        $this->assertEquals($refs[0][0]->getName(), 'refid2');
+        $this->assertEquals($refs[0][1]->getName(), 'uniquecol2');
     }
 }

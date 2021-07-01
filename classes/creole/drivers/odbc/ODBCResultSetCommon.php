@@ -26,19 +26,21 @@ require_once 'creole/common/ResultSetCommon.php';
  * Base class for ODBC implementation of ResultSet.
  *
  * @author    Dave Lawson <dlawson@masterytech.com>
+ *
  * @version   $Revision: 1.3 $
- * @package   creole.drivers.odbc
  */
 abstract class ODBCResultSetCommon extends ResultSetCommon
 {
     /**
      * Offset at which to start reading rows (for emulated offset).
+     *
      * @var int
      */
     protected $offset = 0;
 
     /**
      * Maximum rows to retrieve, or 0 if all (for emulated limit).
+     *
      * @var int
      */
     protected $limit = 0;
@@ -70,8 +72,8 @@ abstract class ODBCResultSetCommon extends ResultSetCommon
      * This function exists to set offset after ResultSet is instantiated.
      * This function should be "protected" in Java sense: only available to classes in package.
      * THIS METHOD SHOULD NOT BE CALLED BY ANYTHING EXCEPTION DRIVER CLASSES.
+     *
      * @param int $offset New offset.
-     * @access protected
      */
     public function _setOffset($offset)
     {
@@ -82,8 +84,8 @@ abstract class ODBCResultSetCommon extends ResultSetCommon
      * This function exists to set limit after ResultSet is instantiated.
      * This function should be "protected" in Java sense: only available to classes in package.
      * THIS METHOD SHOULD NOT BE CALLED BY ANYTHING EXCEPTION DRIVER CLASSES.
+     *
      * @param int $limit New limit.
-     * @access protected
      */
     public function _setLimit($limit)
     {
@@ -93,14 +95,14 @@ abstract class ODBCResultSetCommon extends ResultSetCommon
     /**
      * If fetchmode is FETCHMODE_ASSOC, returns the 1-based field index number
      * for the specified column name. Otherwise returns 0 (false).
+     *
      * @return int
      */
-    function getFieldNum($colname)
+    public function getFieldNum($colname)
     {
         $fieldnum = 0;
 
-        if ($this->fetchmode == ResultSet::FETCHMODE_ASSOC)
-        {
+        if (ResultSet::FETCHMODE_ASSOC == $this->fetchmode) {
             $keys = array_keys($this->fields);
             $fieldnum = array_search($colname, $keys);
         }
@@ -117,9 +119,10 @@ abstract class ODBCResultSetCommon extends ResultSetCommon
      * these datatypes into the buffer. Returns a string with the complete
      * contents.
      *
-     * @param int|string $column Column index or name to read data from.
-     * @param int $binmode ODBC_BINMODE_RETURN for binary data, ODBC_BINMODE_CONVERT for char data.
-     * @param string $curdata Existing LOB data already in buffer.
+     * @param int|string $column  Column index or name to read data from.
+     * @param int        $binmode ODBC_BINMODE_RETURN for binary data, ODBC_BINMODE_CONVERT for char data.
+     * @param string     $curdata Existing LOB data already in buffer.
+     *
      * @return string
      */
     protected function readLobData($column, $binmode, $curdata = null)
@@ -134,14 +137,14 @@ abstract class ODBCResultSetCommon extends ResultSetCommon
         odbc_binmode($this->result->getHandle(), $binmode);
         odbc_longreadlen($this->result->getHandle(), 4096);
 
-        while (1)
-        {
+        while (1) {
             $newdata = odbc_result($this->result->getHandle(), $fldNum);
 
-            if ($newdata === false)
+            if (false === $newdata) {
                 break;
-            else
+            } else {
                 $data .= $newdata;
+            }
         }
 
         // Restore the default binmode and longreadlen
@@ -154,7 +157,7 @@ abstract class ODBCResultSetCommon extends ResultSetCommon
 
         return $data;
     }
-    
+
     /**
      * Converts row fields to names if FETCHMODE_ASSOC is set.
      *
@@ -164,25 +167,22 @@ abstract class ODBCResultSetCommon extends ResultSetCommon
      */
     protected function checkFetchMode(&$row)
     {
-        if ($this->fetchmode == ResultSet::FETCHMODE_ASSOC)
-        {
-            $newrow = array();
-            
-            for ($i = 0, $n = count($row); $i < $n; $i++)
-            {
-                $colname = @odbc_field_name($this->result->getHandle(), $i+1);
-                
+        if (ResultSet::FETCHMODE_ASSOC == $this->fetchmode) {
+            $newrow = [];
+
+            for ($i = 0, $n = count($row); $i < $n; ++$i) {
+                $colname = @odbc_field_name($this->result->getHandle(), $i + 1);
+
                 if ($this->lowerAssocCase) {
                     $colname = strtolower($colname);
                 }
-				
+
                 $newrow[$colname] = $row[$i];
             }
-            
-            $row =& $newrow;
+
+            $row = &$newrow;
         }
-        
+
         return $row;
     }
-
 }

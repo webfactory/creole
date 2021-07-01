@@ -24,40 +24,40 @@ require_once 'creole/common/PreparedStatementCommon.php';
 
 /**
  * MSSQL specific PreparedStatement functions.
- * 
+ *
  * @author    Hans Lellelid <hans@xmpl.org>
+ *
  * @version   $Revision: 1.13 $
- * @package   creole.drivers.mssql
  */
-class MSSQLPreparedStatement extends PreparedStatementCommon implements PreparedStatement {
-    
+class MSSQLPreparedStatement extends PreparedStatementCommon implements PreparedStatement
+{
     /**
      * MSSQL-specific implementation of setBlob().
-     * 
+     *
      * If you are having trouble getting BLOB data into the database, see the phpdoc comment
      * in the MSSQLConnection for some PHP ini values that may need to be set. (This also
      * applies to CLOB support.)
-     * 
-     * @param int $paramIndex
-     * @param mixed $value Blob object or string.
+     *
+     * @param int   $paramIndex
+     * @param mixed $value      Blob object or string.
+     *
      * @return void
      */
-    function setBlob($paramIndex, $blob) 
+    public function setBlob($paramIndex, $blob)
     {
-    	$this->sql_cache_valid = false;
-        if ($blob === null) {
+        $this->sql_cache_valid = false;
+        if (null === $blob) {
             $this->setNull($paramIndex);
         } else {
             // they took magic __toString() out of PHP5.0.0; this sucks
             if (is_object($blob)) {
                 $blob = $blob->__toString();
-            }            
-            $data = unpack("H*hex", $blob);
+            }
+            $data = unpack('H*hex', $blob);
             $this->boundInVars[$paramIndex] = '0x'.$data['hex']; // no surrounding quotes!
-        }        
+        }
     }
 
-    
     /**
      * Add quotes using str_replace.
      * This is not as thorough as MySQL.
@@ -68,32 +68,36 @@ class MSSQLPreparedStatement extends PreparedStatementCommon implements Prepared
         // just in case multiple RDBMS being used at the same time
         return str_replace("'", "''", $subject);
     }
-    
+
     /**
      * MSSQL must emulate OFFSET/LIMIT support.
      */
     public function executeQuery($p1 = null, $fetchmode = null)
-    {    
+    {
         $params = null;
-        if ($fetchmode !== null) {
+        if (null !== $fetchmode) {
             $params = $p1;
-        } elseif ($p1 !== null) {
-            if (is_array($p1)) $params = $p1;
-            else $fetchmode = $p1;
-        }
-        
-        if ($params) {
-            for($i=0,$cnt=count($params); $i < $cnt; $i++) {
-                $this->set($i+1, $params[$i]);
+        } elseif (null !== $p1) {
+            if (is_array($p1)) {
+                $params = $p1;
+            } else {
+                $fetchmode = $p1;
             }
         }
-        
+
+        if ($params) {
+            for ($i = 0,$cnt = count($params); $i < $cnt; ++$i) {
+                $this->set($i + 1, $params[$i]);
+            }
+        }
+
         $this->updateCount = null; // reset
-        $sql = $this->replaceParams();                
-        
+        $sql = $this->replaceParams();
+
         $this->resultSet = $this->conn->executeQuery($sql, $fetchmode);
         $this->resultSet->_setOffset($this->offset);
-        $this->resultSet->_setLimit($this->limit);                
+        $this->resultSet->_setLimit($this->limit);
+
         return $this->resultSet;
     }
 }

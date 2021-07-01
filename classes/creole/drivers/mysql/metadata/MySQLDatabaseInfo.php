@@ -25,38 +25,39 @@ require_once 'creole/metadata/DatabaseInfo.php';
  * MySQL implementation of DatabaseInfo.
  *
  * @author    Hans Lellelid <hans@xmpl.org>
+ *
  * @version   $Revision: 1.13 $
- * @package   creole.drivers.mysql.metadata
  */
-class MySQLDatabaseInfo extends DatabaseInfo {
-
+class MySQLDatabaseInfo extends DatabaseInfo
+{
     /**
      * @throws SQLException
+     *
      * @return void
      */
     protected function initTables()
     {
-        include_once 'creole/drivers/mysql/metadata/MySQLTableInfo.php';		
-																		// using $this->dblink was causing tests to break
-																		// perhaps dblink is changed by another test ... ?
-        $result = @mysql_query("SHOW TABLES FROM `" . $this->dbname . "`", $this->conn->getResource());
+        include_once 'creole/drivers/mysql/metadata/MySQLTableInfo.php';
+        // using $this->dblink was causing tests to break
+        // perhaps dblink is changed by another test ... ?
+        $result = @mysql_query('SHOW TABLES FROM `'.$this->dbname.'`', $this->conn->getResource());
 
         if (!$result) {
-            throw new SQLException("Could not list tables", mysql_error($this->conn->getResource()));
+            throw new SQLException('Could not list tables', mysql_error($this->conn->getResource()));
         }
 
         while ($row = mysql_fetch_row($result)) {
             $this->tables[strtoupper($row[0])] = new MySQLTableInfo($this, $row[0]);
         }
-		
-		$this->tablesLoaded = true;
-		
+
+        $this->tablesLoaded = true;
     }
 
     /**
      * MySQL does not support sequences.
      *
      * @return void
+     *
      * @throws SQLException
      */
     protected function initSequences()

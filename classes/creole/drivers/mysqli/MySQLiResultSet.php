@@ -30,10 +30,11 @@ require_once 'creole/common/ResultSetCommon.php';
  * exception was thrown, and that OFFSET/LIMIT will never be emulated for MySQL.
  *
  * @author    Sebastian Bergmann <sb@sebastian-bergmann.de>
+ *
  * @version   $Revision: 1.5 $
- * @package   creole.drivers.mysqli
  */
-class MySQLiResultSet extends ResultSetCommon implements ResultSet {
+class MySQLiResultSet extends ResultSetCommon implements ResultSet
+{
     /**
      * @see ResultSet::seek()
      */
@@ -41,8 +42,8 @@ class MySQLiResultSet extends ResultSetCommon implements ResultSet {
     {
         // MySQL rows start w/ 0, but this works, because we are
         // looking to move the position _before_ the next desired position
-         if (!@mysqli_data_seek($this->result, $rownum)) {
-                return false;
+        if (!@mysqli_data_seek($this->result, $rownum)) {
+            return false;
         }
 
         $this->cursorPos = $rownum;
@@ -64,18 +65,20 @@ class MySQLiResultSet extends ResultSetCommon implements ResultSet {
             if (!$errno) {
                 // We've advanced beyond end of recordset.
                 $this->afterLast();
+
                 return false;
             } else {
-                throw new SQLException("Error fetching result", mysqli_error($resource));
+                throw new SQLException('Error fetching result', mysqli_error($resource));
             }
         }
 
-        if ($this->fetchmode === ResultSet::FETCHMODE_ASSOC && $this->lowerAssocCase) {
+        if (ResultSet::FETCHMODE_ASSOC === $this->fetchmode && $this->lowerAssocCase) {
             $this->fields = array_change_key_case($this->fields, CASE_LOWER);
         }
 
         // Advance cursor position
-        $this->cursorPos++;
+        ++$this->cursorPos;
+
         return true;
     }
 
@@ -86,8 +89,8 @@ class MySQLiResultSet extends ResultSetCommon implements ResultSet {
     {
         $rows = @mysqli_num_rows($this->result);
 
-        if ($rows === null) {
-            throw new SQLException("Error fetching num rows", mysqli_error($this->conn->getResource()));
+        if (null === $rows) {
+            throw new SQLException('Error fetching num rows', mysqli_error($this->conn->getResource()));
         }
 
         return (int) $rows;
@@ -98,16 +101,17 @@ class MySQLiResultSet extends ResultSetCommon implements ResultSet {
      */
     public function close()
     {
-        if ($this->result !== null) {
+        if (null !== $this->result) {
             @mysqli_free_result($this->result);
             $this->result = null;
         }
-        $this->fields = array();
+        $this->fields = [];
     }
 
     /**
      * Get string version of column.
      * No rtrim() necessary for MySQL, as this happens natively.
+     *
      * @see ResultSet::getString()
      */
     public function getString($column)
@@ -115,10 +119,10 @@ class MySQLiResultSet extends ResultSetCommon implements ResultSet {
         $idx = (is_int($column) ? $column - 1 : $column);
 
         if (!array_key_exists($idx, $this->fields)) {
-            throw new SQLException("Invalid resultset column: " . $column);
+            throw new SQLException('Invalid resultset column: '.$column);
         }
 
-        if ($this->fields[$idx] === null) {
+        if (null === $this->fields[$idx]) {
             return null;
         }
 
@@ -127,28 +131,31 @@ class MySQLiResultSet extends ResultSetCommon implements ResultSet {
 
     /**
      * Returns a unix epoch timestamp based on either a TIMESTAMP or DATETIME field.
+     *
      * @param mixed $column Column name (string) or index (int) starting with 1.
+     *
      * @return string
+     *
      * @throws SQLException - If the column specified is not a valid key in current field array.
      */
-    public function getTimestamp($column, $format='Y-m-d H:i:s')
+    public function getTimestamp($column, $format = 'Y-m-d H:i:s')
     {
         if (is_int($column)) {
             // because Java convention is to start at 1
-            $column--;
+            --$column;
         }
 
         if (!array_key_exists($column, $this->fields)) {
-            throw new SQLException("Invalid resultset column: " . (is_int($column) ? $column + 1 : $column));
+            throw new SQLException('Invalid resultset column: '.(is_int($column) ? $column + 1 : $column));
         }
 
-        if ($this->fields[$column] === null) {
+        if (null === $this->fields[$column]) {
             return null;
         }
 
         $ts = strtotime($this->fields[$column]);
 
-        if ($ts === -1 || $ts === false) { // in PHP 5.1 return value changes to FALSE
+        if (-1 === $ts || false === $ts) { // in PHP 5.1 return value changes to FALSE
             // otherwise it's an ugly MySQL timestamp!
             // YYYYMMDDHHMMSS
             if (preg_match('/([\d]{4})([\d]{2})([\d]{2})([\d]{2})([\d]{2})([\d]{2})/', $this->fields[$column], $matches)) {
@@ -158,16 +165,16 @@ class MySQLiResultSet extends ResultSetCommon implements ResultSet {
             }
         }
 
-        if ($ts === -1 || $ts === false) { // in PHP 5.1 return value changes to FALSE
+        if (-1 === $ts || false === $ts) { // in PHP 5.1 return value changes to FALSE
             // if it's still -1, then there's nothing to be done; use a different method.
-            throw new SQLException("Unable to convert value at column " . (is_int($column) ? $column + 1 : $column) . " to timestamp: " . $this->fields[$column]);
+            throw new SQLException('Unable to convert value at column '.(is_int($column) ? $column + 1 : $column).' to timestamp: '.$this->fields[$column]);
         }
 
-        if ($format === null) {
+        if (null === $format) {
             return $ts;
         }
 
-        if (strpos($format, '%') !== false) {
+        if (false !== strpos($format, '%')) {
             return strftime($format, $ts);
         } else {
             return date($format, $ts);
@@ -188,7 +195,10 @@ class MySQLiResultSet extends ResultSetCommon implements ResultSet {
            date, which is why we make this decision here in the specific
            driver before dispatching to the common implementation. */
         $idx = (is_int($column) ? $column - 1 : $column);
-        if (array_key_exists($idx, $this->fields) && $this->fields[$idx] == '0000-00-00') return null;
+        if (array_key_exists($idx, $this->fields) && '0000-00-00' == $this->fields[$idx]) {
+            return null;
+        }
+
         return parent::getDate($column, $format);
     }
 }

@@ -24,22 +24,21 @@ require_once 'jargon/Query.php';
 
 /**
  * Class for representing a SQL query for retrieving paged results from a database.
- * 
+ *
  * Note that this class is for retrieving results and not performing updates.
- * 
- * 
+ *
  * @author    Hans Lellelid <hans@xmpl.org>
+ *
  * @version   $Revision: 1.5 $
- * @package   jargon 
  */
-class PagedQuery extends Query {
-    
+class PagedQuery extends Query
+{
     /** @var int Current page number (1-based). */
     private $page;
-    
+
     /**
      * Create a new Query.
-     * @param Connection $conn
+     *
      * @param string $sql
      */
     public function __construct(Connection $conn, $sql = null, $page = 1, $rowsPerPage = 25)
@@ -48,10 +47,12 @@ class PagedQuery extends Query {
         $this->setRowsPerPage($rowsPerPage);
         $this->setPage($page);
     }
-    
+
     /**
      * Set the current page number (First page is 1).
+     *
      * @param int $page
+     *
      * @return void
      */
     public function setPage($page)
@@ -60,18 +61,20 @@ class PagedQuery extends Query {
         // (re-)calculate start rec
         $this->calculateStart();
     }
-    
+
     /**
      * Get current page.
+     *
      * @return int
      */
     public function getPage()
     {
         return $this->page;
     }
-    
+
     /**
      * Set the number of rows per page.
+     *
      * @param int $r
      */
     public function setRowsPerPage($r)
@@ -80,40 +83,42 @@ class PagedQuery extends Query {
         // (re-)calculate start rec
         $this->calculateStart();
     }
-    
+
     /**
      * Get number of rows per page.
+     *
      * @return int
      */
     public function getRowsPerPage()
     {
         return $this->max;
     }
-    
+
     /**
      * Calculate startrow / max rows based on current page and rows-per-page.
+     *
      * @return void
      */
     private function calculateStart()
     {
-        $this->start = ( ($this->page - 1) * $this->max );
+        $this->start = (($this->page - 1) * $this->max);
     }
-    
+
     /**
      * Gets the total number (un-LIMITed) of records.
-     * 
+     *
      * This method will perform a query that executes un-LIMITed query.  This
      * method is not performance-conscious, so don't call this repeatedly for
      * the same query.
-     * 
+     *
      * @return int Total number of records - disregarding page, maxrows, etc.
+     *
      * @throws SQLException
      */
     public function getTotalRecordCount()
     {
         $rs = $this->conn->createStatement()->executeQuery($this->sql);
+
         return $rs->getRecordCount();
     }
-        
-} 
-
+}

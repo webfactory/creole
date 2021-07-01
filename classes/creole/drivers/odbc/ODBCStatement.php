@@ -23,11 +23,11 @@ require_once 'creole/Statement.php';
 require_once 'creole/common/StatementCommon.php';
 
 /**
- * ODBC Statement
+ * ODBC Statement.
  *
  * @author    Dave Lawson <dlawson@masterytech.com>
+ *
  * @version   $Revision: 1.1 $
- * @package   creole.drivers.odbc
  */
 class ODBCStatement extends StatementCommon implements Statement
 {
@@ -36,29 +36,26 @@ class ODBCStatement extends StatementCommon implements Statement
      */
     public function executeQuery($sql, $fetchmode = null)
     {
-        if ($this->resultSet)
-        {
+        if ($this->resultSet) {
             $this->resultSet->close();
             $this->resultSet = null;
         }
 
         $this->updateCount = null;
 
-        if ($this->conn->getAdapter()->hasLimitOffset())
-        {
-            if ($this->limit > 0 || $this->offset > 0)
+        if ($this->conn->getAdapter()->hasLimitOffset()) {
+            if ($this->limit > 0 || $this->offset > 0) {
                 $this->conn->applyLimit($sql, $this->offset, $this->limit);
+            }
         }
 
         $this->resultSet = $this->conn->executeQuery($sql, $fetchmode);
 
-        if (!$this->conn->getAdapter()->hasLimitOffset())
-        {
+        if (!$this->conn->getAdapter()->hasLimitOffset()) {
             $this->resultSet->_setOffset($this->offset);
             $this->resultSet->_setLimit($this->limit);
         }
 
         return $this->resultSet;
     }
-
 }

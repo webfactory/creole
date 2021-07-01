@@ -25,57 +25,66 @@ require_once 'creole/util/Lob.php';
  * A class for handling character (ASCII) LOBs.
  *
  * @author    Hans Lellelid <hans@xmpl.org>
+ *
  * @version   $Revision: 1.6 $
- * @package   creole.util
  */
-class Clob extends Lob {
-
+class Clob extends Lob
+{
     /**
      * Read LOB data from file.
+     *
      * @param string $file Filename may also be specified here (if not specified using setInputFile()).
+     *
      * @return void
+     *
      * @throws Exception - if no file specified or error on read.
+     *
      * @see setInputFile()
      */
     public function readFromFile($file = null)
     {
-        if ($file !== null) {
+        if (null !== $file) {
             $this->setInputFile($file);
         }
         if (!$this->inFile) {
             throw Exception('No file specified for read.');
         }
         $data = null;
-        $file = fopen($this->inFile, "rt");
-        while (!feof($file)) $data .= fgets($file, 4096);
+        $file = fopen($this->inFile, 'rt');
+        while (!feof($file)) {
+            $data .= fgets($file, 4096);
+        }
         fclose($file);
-        if ($data === false) {
+        if (false === $data) {
             throw new Exception('Unable to read from file: '.$this->inFile);
         }
         $this->setContents($data);
     }
 
-
     /**
      * Write LOB data to file.
+     *
      * @param string $file Filename may also be specified here (if not set using setOutputFile()).
+     *
      * @throws Exception - if no file specified, no contents to write, or error on write.
+     *
      * @see setOutputFile()
      */
     public function writeToFile($file = null)
     {
-        if ($file !== null) {
+        if (null !== $file) {
             $this->setOutputFile($file);
         }
         if (!$this->outFile) {
             throw new Exception('No file specified for write');
         }
-        if ($this->data === null) {
+        if (null === $this->data) {
             throw new Exception('No data to write to file');
         }
-        $file = fopen($this->inFile, "wt");
-        if (fputs($file, $this->data) === false)
+        $file = fopen($this->inFile, 'wt');
+        if (false === fputs($file, $this->data)) {
             throw new Exception('Unable to write to file: '.$this->outFile);
+        }
         fclose($file);
     }
 
@@ -83,15 +92,15 @@ class Clob extends Lob {
      * Dump the contents of the file using fpassthru().
      *
      * @return void
+     *
      * @throws Exception if no file or contents.
      */
-    function dump()
+    public function dump()
     {
         if (!$this->data) {
-
             // is there a file name set?
             if ($this->inFile) {
-                $fp = @fopen($this->inFile, "r");
+                $fp = @fopen($this->inFile, 'r');
                 if (!$fp) {
                     throw new Exception('Unable to open file: '.$this->inFile);
                 }
@@ -100,13 +109,8 @@ class Clob extends Lob {
             } else {
                 throw new Exception('No data to dump');
             }
-
         } else {
             echo $this->data;
         }
-
     }
-
-
-
 }

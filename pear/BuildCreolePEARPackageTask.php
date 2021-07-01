@@ -24,127 +24,129 @@ include_once 'phing/types/FileSet.php';
 include_once 'phing/tasks/ext/pearpackage/Fileset.php';
 
 /**
- *
  * @author   Hans Lellelid <hans@xmpl.org>
+ *
  * @version  $Revision$
  */
-class BuildCreolePEARPackageTask extends MatchingTask {
-
+class BuildCreolePEARPackageTask extends MatchingTask
+{
     /** Base directory for reading files. */
     private $dir;
 
-	private $version;
-	private $state = 'stable';
-	private $notes;
+    private $version;
+    private $state = 'stable';
+    private $notes;
 
-	private $filesets = array();
+    private $filesets = [];
 
     /** Package file */
     private $packageFile;
 
-    public function init() {
+    public function init()
+    {
         include_once 'PEAR/PackageFileManager2.php';
         if (!class_exists('PEAR_PackageFileManager2')) {
-            throw new BuildException("You must have installed PEAR_PackageFileManager2 (PEAR_PackageFileManager >= 1.6.0) in order to create a PEAR package.xml file.");
+            throw new BuildException('You must have installed PEAR_PackageFileManager2 (PEAR_PackageFileManager >= 1.6.0) in order to create a PEAR package.xml file.');
         }
     }
 
-    private function setOptions($pkg){
-
-		$options['baseinstalldir'] = 'creole';
+    private function setOptions($pkg)
+    {
+        $options['baseinstalldir'] = 'creole';
         $options['packagedirectory'] = $this->dir->getAbsolutePath();
 
         if (empty($this->filesets)) {
-			throw new BuildException("You must use a <fileset> tag to specify the files to include in the package.xml");
-		}
+            throw new BuildException('You must use a <fileset> tag to specify the files to include in the package.xml');
+        }
 
-		$options['filelistgenerator'] = 'Fileset';
+        $options['filelistgenerator'] = 'Fileset';
 
-		// Some PHING-specific options needed by our Fileset reader
-		$options['phing_project'] = $this->getProject();
-		$options['phing_filesets'] = $this->filesets;
+        // Some PHING-specific options needed by our Fileset reader
+        $options['phing_project'] = $this->getProject();
+        $options['phing_filesets'] = $this->filesets;
 
-		if ($this->packageFile !== null) {
+        if (null !== $this->packageFile) {
             // create one w/ full path
             $f = new PhingFile($this->packageFile->getAbsolutePath());
             $options['packagefile'] = $f->getName();
             // must end in trailing slash
-            $options['outputdirectory'] = $f->getParent() . DIRECTORY_SEPARATOR;
-            $this->log("Creating package file: " . $f->getPath(), PROJECT_MSG_INFO);
+            $options['outputdirectory'] = $f->getParent().DIRECTORY_SEPARATOR;
+            $this->log('Creating package file: '.$f->getPath(), PROJECT_MSG_INFO);
         } else {
-            $this->log("Creating [default] package.xml file in base directory.", PROJECT_MSG_INFO);
+            $this->log('Creating [default] package.xml file in base directory.', PROJECT_MSG_INFO);
         }
 
-		/*
-		$options['exceptions'] = array(
-										'CHANGELOG' => 'doc',
-										'README' => 'doc',
-										'TODO' => 'doc');
-		*/
-		$pkg->setOptions($options);
-
+        /*
+        $options['exceptions'] = array(
+                                        'CHANGELOG' => 'doc',
+                                        'README' => 'doc',
+                                        'TODO' => 'doc');
+        */
+        $pkg->setOptions($options);
     }
 
     /**
      * Main entry point.
+     *
      * @return void
      */
-    public function main() {
-
-        if ($this->dir === null) {
-            throw new BuildException("You must specify the \"dir\" attribute for PEAR package task.");
+    public function main()
+    {
+        if (null === $this->dir) {
+            throw new BuildException('You must specify the "dir" attribute for PEAR package task.');
         }
 
-		if ($this->version === null) {
-            throw new BuildException("You must specify the \"version\" attribute for PEAR package task.");
+        if (null === $this->version) {
+            throw new BuildException('You must specify the "version" attribute for PEAR package task.');
         }
 
-		$package = new PEAR_PackageFileManager2();
+        $package = new PEAR_PackageFileManager2();
 
-		$this->setOptions($package);
+        $this->setOptions($package);
 
-		// the hard-coded stuff
-		$package->setPackage('creole');
-		$package->setSummary('Database abstraction for PHP5');
-		$package->setDescription("Creole is a database abstraction layer for PHP5. It
+        // the hard-coded stuff
+        $package->setPackage('creole');
+        $package->setSummary('Database abstraction for PHP5');
+        $package->setDescription("Creole is a database abstraction layer for PHP5. It
 abstracts PHP's native db-specific API to create more portable code while
 also providing developers with a clean fully object-oriented interface based loosely
 on the API for Java's JDBC.");
-		$package->setChannel('pear.phpdb.org');
-		$package->setPackageType('php');
+        $package->setChannel('pear.phpdb.org');
+        $package->setPackageType('php');
 
-		$package->setReleaseVersion($this->version);
-		$package->setAPIVersion($this->version);
+        $package->setReleaseVersion($this->version);
+        $package->setAPIVersion($this->version);
 
-		$package->setReleaseStability($this->state);
-		$package->setAPIStability($this->state);
+        $package->setReleaseStability($this->state);
+        $package->setAPIStability($this->state);
 
-		$package->setNotes($this->notes);
+        $package->setNotes($this->notes);
 
-		$package->setLicense('LGPL', 'http://www.gnu.org/licenses/lgpl.html');
+        $package->setLicense('LGPL', 'http://www.gnu.org/licenses/lgpl.html');
 
-		// Add package maintainers
-		$package->addMaintainer('lead', 'hans', 'Hans Lellelid', 'hans@xmpl.org');
+        // Add package maintainers
+        $package->addMaintainer('lead', 'hans', 'Hans Lellelid', 'hans@xmpl.org');
 
-		// "core" dependencies
-		$package->setPhpDep('5.0.0');
-		$package->setPearinstallerDep('1.4.0');
+        // "core" dependencies
+        $package->setPhpDep('5.0.0');
+        $package->setPearinstallerDep('1.4.0');
 
-		$package->generateContents();
+        $package->generateContents();
 
         $e = $package->writePackageFile();
 
         if (PEAR::isError($e)) {
-            throw new BuildException("Unable to write package file.", new Exception($e->getMessage()));
+            throw new BuildException('Unable to write package file.', new Exception($e->getMessage()));
         }
-
     }
 
     /**
      * Used by the PEAR_PackageFileManager_PhingFileSet lister.
+     *
      * @return array FileSet[]
      */
-    public function getFileSets() {
+    public function getFileSets()
+    {
         return $this->filesets;
     }
 
@@ -153,57 +155,68 @@ on the API for Java's JDBC.");
     // -------------------------------
 
     /**
-     * Nested creator, creates a FileSet for this task
+     * Nested creator, creates a FileSet for this task.
      *
      * @return FileSet The created fileset object
      */
-    function createFileSet() {
+    public function createFileSet()
+    {
         $num = array_push($this->filesets, new FileSet());
-        return $this->filesets[$num-1];
+
+        return $this->filesets[$num - 1];
     }
 
-	/**
+    /**
      * Set the version we are building.
+     *
      * @param string $v
+     *
      * @return void
      */
-	public function setVersion($v){
-		$this->version = $v;
-	}
+    public function setVersion($v)
+    {
+        $this->version = $v;
+    }
 
-	/**
+    /**
      * Set the state we are building.
+     *
      * @param string $v
+     *
      * @return void
      */
-	public function setState($v) {
-		$this->state = $v;
-	}
+    public function setState($v)
+    {
+        $this->state = $v;
+    }
 
-	/**
-	 * Sets release notes field.
-	 * @param string $v
-	 * @return void
-	 */
-	public function setNotes($v) {
-		$this->notes = $v;
-	}
+    /**
+     * Sets release notes field.
+     *
+     * @param string $v
+     *
+     * @return void
+     */
+    public function setNotes($v)
+    {
+        $this->notes = $v;
+    }
+
     /**
      * Sets "dir" property from XML.
-     * @param PhingFile $f
+     *
      * @return void
      */
-    public function setDir(PhingFile $f) {
+    public function setDir(PhingFile $f)
+    {
         $this->dir = $f;
     }
 
     /**
-     * Sets the file to use for generated package.xml
+     * Sets the file to use for generated package.xml.
      */
-    public function setDestFile(PhingFile $f) {
+    public function setDestFile(PhingFile $f)
+    {
         $this->packageFile = $f;
     }
-
 }
-
-

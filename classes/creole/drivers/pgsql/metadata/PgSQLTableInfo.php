@@ -26,51 +26,58 @@ require_once 'creole/metadata/TableInfo.php';
  *
  * See this Python code by David M. Cook for some good reference on Pgsql metadata
  * functions:
- * @link http://www.sandpyt.org/pipermail/sandpyt/2003-March/000008.html
+ *
+ * @see http://www.sandpyt.org/pipermail/sandpyt/2003-March/000008.html
  *
  * Here's some more information from postgresql:
- * @link http://developer.postgresql.org/docs/pgsql/src/backend/catalog/information_schema.sql
+ * @see http://developer.postgresql.org/docs/pgsql/src/backend/catalog/information_schema.sql
  *
  * @todo -c Eventually move to supporting only Postgres >= 7.4, which has the information_schema
  *
  * @author    Hans Lellelid <hans@xmpl.org>
+ *
  * @version   $Revision: 1.31 $
- * @package   creole.drivers.pgsql.metadata
  */
-class PgSQLTableInfo extends TableInfo {
-	
+class PgSQLTableInfo extends TableInfo
+{
     /**
      * Database Version.
-     * @var String
+     *
+     * @var string
      */
     private $version;
-	
+
     /**
-     * Table OID
-     * @var Integer
+     * Table OID.
+     *
+     * @var int
      */
     private $oid;
 
     /**
-     * @param string $table The table name.
-     * @param string $database The database name.
-     * @param resource $dblink The db connection resource.
+     * @param string   $table    The table name.
+     * @param string   $database The database name.
+     * @param resource $dblink   The db connection resource.
      */
-    function __construct(DatabaseInfo $database, $name, $version, $intOID) {
-        parent::__construct ($database, $name);
+    public function __construct(DatabaseInfo $database, $name, $version, $intOID)
+    {
+        parent::__construct($database, $name);
         $this->version = $version;
         $this->oid = $intOID;
-    } // function __construct(DatabaseInfo $database, $name) {
+    }
+
+    // function __construct(DatabaseInfo $database, $name) {
 
     /** Load the columns for this table */
-    protected function initColumns () {
-    	// Include dependencies
-    	include_once ('creole/metadata/ColumnInfo.php');
-    	include_once ('creole/drivers/pgsql/PgSQLTypes.php');
+    protected function initColumns()
+    {
+        // Include dependencies
+        include_once 'creole/metadata/ColumnInfo.php';
+        include_once 'creole/drivers/pgsql/PgSQLTypes.php';
 
-    	// Get the columns, types, etc.
-    	// Based on code from pgAdmin3 (http://www.pgadmin.org/)
-    	$result = pg_query ($this->conn->getResource(), sprintf ("SELECT 
+        // Get the columns, types, etc.
+        // Based on code from pgAdmin3 (http://www.pgadmin.org/)
+        $result = pg_query($this->conn->getResource(), sprintf("SELECT 
     								att.attname,
     								att.atttypmod,
     								att.atthasdef,
@@ -94,116 +101,107 @@ class PgSQLTableInfo extends TableInfo {
 								ORDER BY att.attnum", $this->oid));
 
         if (!$result) {
-            throw new SQLException("Could not list fields for table: " . $this->name, pg_last_error($this->conn->getResource()));
+            throw new SQLException('Could not list fields for table: '.$this->name, pg_last_error($this->conn->getResource()));
         }
-        while($row = pg_fetch_assoc($result)) {
-        	
-        	$size = null;
-        	$precision = null;
-        	$scale = null;
-        	
-        	// Check to ensure that this column isn't an array data type
-        	if (((int) $row['isarray']) === 1)
-        	{
-        		throw new SQLException (sprintf ("Array datatypes are not currently supported [%s.%s]", $this->name, $row['attname']));
-        	} // if (((int) $row['isarray']) === 1)
+        while ($row = pg_fetch_assoc($result)) {
+            $size = null;
+            $precision = null;
+            $scale = null;
+
+            // Check to ensure that this column isn't an array data type
+            if (((int) $row['isarray']) === 1) {
+                throw new SQLException(sprintf('Array datatypes are not currently supported [%s.%s]', $this->name, $row['attname']));
+            } // if (((int) $row['isarray']) === 1)
             $name = $row['attname'];
             // If they type is a domain, Process it
-            if (strtolower ($row['typtype']) == 'd')
-            {
-            	$arrDomain = $this->processDomain ($row['typname']);
-            	$type = $arrDomain['type'];
-            	$size = $arrDomain['length'];
-            	$precision = $size;
-            	$scale = $arrDomain['scale'];
-            	$boolHasDefault = (strlen (trim ($row['atthasdef'])) > 0) ? $row['atthasdef'] : $arrDomain['hasdefault'];
-            	$default = (strlen (trim ($row['adsrc'])) > 0) ? $row['adsrc'] : $arrDomain['default'];
-            	$is_nullable = (strlen (trim ($row['attnotnull'])) > 0) ? $row['attnotnull'] : $arrDomain['notnull'];
-            	$is_nullable = (($is_nullable == 't') ? false : true);
+            if ('d' == strtolower($row['typtype'])) {
+                $arrDomain = $this->processDomain($row['typname']);
+                $type = $arrDomain['type'];
+                $size = $arrDomain['length'];
+                $precision = $size;
+                $scale = $arrDomain['scale'];
+                $boolHasDefault = (strlen(trim($row['atthasdef'])) > 0) ? $row['atthasdef'] : $arrDomain['hasdefault'];
+                $default = (strlen(trim($row['adsrc'])) > 0) ? $row['adsrc'] : $arrDomain['default'];
+                $is_nullable = (strlen(trim($row['attnotnull'])) > 0) ? $row['attnotnull'] : $arrDomain['notnull'];
+                $is_nullable = (('t' == $is_nullable) ? false : true);
             } // if (strtolower ($row['typtype']) == 'd')
-            else
-            {
-	            $type = $row['typname'];
-	            $arrLengthPrecision = $this->processLengthScale ($row['atttypmod'], $type);
-	            $size = $arrLengthPrecision['length'];
-	            $precision = $size;
-	            $scale = $arrLengthPrecision['scale'];
-	            $boolHasDefault = $row['atthasdef'];
-	            $default = $row['adsrc'];
-	            $is_nullable = (($row['attnotnull'] == 't') ? false : true);
+            else {
+                $type = $row['typname'];
+                $arrLengthPrecision = $this->processLengthScale($row['atttypmod'], $type);
+                $size = $arrLengthPrecision['length'];
+                $precision = $size;
+                $scale = $arrLengthPrecision['scale'];
+                $boolHasDefault = $row['atthasdef'];
+                $default = $row['adsrc'];
+                $is_nullable = (('t' == $row['attnotnull']) ? false : true);
             } // else (strtolower ($row['typtype']) == 'd')
 
             $autoincrement = null;
-                       
+
             // if column has a default
-            if (($boolHasDefault == 't') && (strlen (trim ($default)) > 0))
-            {
-	            if (!preg_match('/^nextval\(/', $default))
-	            {
-	            	$strDefault= preg_replace ('/::[\W\D]*/', '', $default);
-	            	$default = str_replace ("'", '', $strDefault);
-	            } // if (!preg_match('/^nextval\(/', $row['atthasdef']))
-	            else
-	            {
-	            	$autoincrement = true;
-	            	$default = null;
-	            } // else
+            if (('t' == $boolHasDefault) && (strlen(trim($default)) > 0)) {
+                if (!preg_match('/^nextval\(/', $default)) {
+                    $strDefault = preg_replace('/::[\W\D]*/', '', $default);
+                    $default = str_replace("'", '', $strDefault);
+                } // if (!preg_match('/^nextval\(/', $row['atthasdef']))
+                else {
+                    $autoincrement = true;
+                    $default = null;
+                } // else
             } // if (($boolHasDefault == 't') && (strlen (trim ($default)) > 0))
-            else
-            {
-            	$default = null;
+            else {
+                $default = null;
             } // else (($boolHasDefault == 't') && (strlen (trim ($default)) > 0))
 
             $this->columns[$name] = new ColumnInfo($this, $name, PgSQLTypes::getType($type), $type, $size, $precision, $scale, $is_nullable, $default, $autoincrement);
         }
 
         $this->colsLoaded = true;
-    } // protected function initColumns ()
+    }
 
-    private function processLengthScale ($intTypmod, $strName)
+    // protected function initColumns ()
+
+    private function processLengthScale($intTypmod, $strName)
     {
-    	// Define the return array
-    	$arrRetVal = array ('length'=>null, 'scale'=>null);
+        // Define the return array
+        $arrRetVal = ['length' => null, 'scale' => null];
 
-    	// Some datatypes don't have a Typmod
-    	if ($intTypmod == -1)
-    	{
-    		return $arrRetVal;
-    	} // if ($intTypmod == -1)
+        // Some datatypes don't have a Typmod
+        if (-1 == $intTypmod) {
+            return $arrRetVal;
+        } // if ($intTypmod == -1)
 
-    	// Numeric Datatype?
-    	if ($strName == PgSQLTypes::getNativeType (CreoleTypes::NUMERIC))
-    	{
-    		$intLen = ($intTypmod - 4) >> 16;
-    		$intPrec = ($intTypmod - 4) & 0xffff;
-    		$intLen = sprintf ("%ld", $intLen);
-    		if ($intPrec)
-    		{
-    			$intPrec = sprintf ("%ld", $intPrec);
-    		} // if ($intPrec)
-    		$arrRetVal['length'] = $intLen;
-    		$arrRetVal['scale'] = $intPrec;
-    	} // if ($strName == PgSQLTypes::getNativeType (CreoleTypes::NUMERIC))
-    	elseif ($strName == PgSQLTypes::getNativeType (CreoleTypes::TIME) || $strName == 'timetz'
-    		|| $strName == PgSQLTypes::getNativeType (CreoleTypes::TIMESTAMP) || $strName == 'timestamptz'
-    		|| $strName == 'interval' || $strName == 'bit')
-    	{
-    		$arrRetVal['length'] = sprintf ("%ld", $intTypmod);
-    	} // elseif (TIME, TIMESTAMP, INTERVAL, BIT)
-    	else
-    	{
-    		$arrRetVal['length'] = sprintf ("%ld", ($intTypmod - 4));
-    	} // else
-    	return $arrRetVal;
-    } // private function processLengthScale ($intTypmod, $strName)
+        // Numeric Datatype?
+        if ($strName == PgSQLTypes::getNativeType(CreoleTypes::NUMERIC)) {
+            $intLen = ($intTypmod - 4) >> 16;
+            $intPrec = ($intTypmod - 4) & 0xffff;
+            $intLen = sprintf('%ld', $intLen);
+            if ($intPrec) {
+                $intPrec = sprintf('%ld', $intPrec);
+            } // if ($intPrec)
+            $arrRetVal['length'] = $intLen;
+            $arrRetVal['scale'] = $intPrec;
+        } // if ($strName == PgSQLTypes::getNativeType (CreoleTypes::NUMERIC))
+        elseif ($strName == PgSQLTypes::getNativeType(CreoleTypes::TIME) || 'timetz' == $strName
+            || $strName == PgSQLTypes::getNativeType(CreoleTypes::TIMESTAMP) || 'timestamptz' == $strName
+            || 'interval' == $strName || 'bit' == $strName) {
+            $arrRetVal['length'] = sprintf('%ld', $intTypmod);
+        } // elseif (TIME, TIMESTAMP, INTERVAL, BIT)
+        else {
+            $arrRetVal['length'] = sprintf('%ld', ($intTypmod - 4));
+        } // else
 
-    private function processDomain ($strDomain)
+        return $arrRetVal;
+    }
+
+    // private function processLengthScale ($intTypmod, $strName)
+
+    private function processDomain($strDomain)
     {
-    	if (strlen (trim ($strDomain)) < 1)
-    	{
-    		throw new SQLException ("Invalid domain name [" . $strDomain . "]");
-    	} // if (strlen (trim ($strDomain)) < 1)
-    	$result = pg_query ($this->conn->getResource(), sprintf ("SELECT
+        if (strlen(trim($strDomain)) < 1) {
+            throw new SQLException('Invalid domain name ['.$strDomain.']');
+        } // if (strlen (trim ($strDomain)) < 1)
+        $result = pg_query($this->conn->getResource(), sprintf("SELECT
 														d.typname as domname,
 														b.typname as basetype,
 														d.typlen,
@@ -218,33 +216,35 @@ class PgSQLTableInfo extends TableInfo {
 													ORDER BY d.typname", $strDomain));
 
         if (!$result) {
-            throw new SQLException("Query for domain [" . $strDomain . "] failed.", pg_last_error($this->conn->getResource()));
+            throw new SQLException('Query for domain ['.$strDomain.'] failed.', pg_last_error($this->conn->getResource()));
         }
 
-        $row = pg_fetch_assoc ($result);
-        if (!$row)
-        {
-        	throw new SQLException ("Domain [" . $strDomain . "] not found.");
+        $row = pg_fetch_assoc($result);
+        if (!$row) {
+            throw new SQLException('Domain ['.$strDomain.'] not found.');
         } // if (!$row)
-        $arrDomain = array ();
+        $arrDomain = [];
         $arrDomain['type'] = $row['basetype'];
-	    $arrLengthPrecision = $this->processLengthScale ($row['typtypmod'], $row['basetype']);
-	    $arrDomain['length'] = $arrLengthPrecision['length'];
-	    $arrDomain['scale'] = $arrLengthPrecision['scale'];
-	    $arrDomain['notnull'] = $row['typnotnull'];
-	    $arrDomain['default'] = $row['typdefault'];
-	    $arrDomain['hasdefault'] = (strlen (trim ($row['typdefault'])) > 0) ? 't' : 'f';
+        $arrLengthPrecision = $this->processLengthScale($row['typtypmod'], $row['basetype']);
+        $arrDomain['length'] = $arrLengthPrecision['length'];
+        $arrDomain['scale'] = $arrLengthPrecision['scale'];
+        $arrDomain['notnull'] = $row['typnotnull'];
+        $arrDomain['default'] = $row['typdefault'];
+        $arrDomain['hasdefault'] = (strlen(trim($row['typdefault'])) > 0) ? 't' : 'f';
 
-	    pg_free_result ($result);
-	    return $arrDomain;
-    } // private function processDomain ($strDomain)
+        pg_free_result($result);
+
+        return $arrDomain;
+    }
+
+    // private function processDomain ($strDomain)
 
     /** Load foreign keys for this table. */
     protected function initForeignKeys()
     {
         include_once 'creole/metadata/ForeignKeyInfo.php';
 
-        $result = pg_query ($this->conn->getResource(), sprintf ("SELECT
+        $result = pg_query($this->conn->getResource(), sprintf("SELECT
 						      conname,
 						      confupdtype,
 						      confdeltype,
@@ -264,10 +264,10 @@ class PgSQLTableInfo extends TableInfo {
 						     AND a1.attnum = ct.confkey[1]
 						ORDER BY conname", $this->oid));
         if (!$result) {
-            throw new SQLException("Could not list foreign keys for table: " . $this->name, pg_last_error($this->conn->getResource()));
+            throw new SQLException('Could not list foreign keys for table: '.$this->name, pg_last_error($this->conn->getResource()));
         }
 
-        while($row = pg_fetch_assoc($result)) {
+        while ($row = pg_fetch_assoc($result)) {
             $name = $row['conname'];
             $local_table = $row['fktab'];
             $local_column = $row['fkcol'];
@@ -305,12 +305,11 @@ class PgSQLTableInfo extends TableInfo {
                 $ondelete = ForeignKeyInfo::NONE; break;
             }
 
-
             $foreignTable = $this->database->getTable($foreign_table);
             $foreignColumn = $foreignTable->getColumn($foreign_column);
 
-            $localTable   = $this->database->getTable($local_table);
-            $localColumn   = $localTable->getColumn($local_column);
+            $localTable = $this->database->getTable($local_table);
+            $localColumn = $localTable->getColumn($local_column);
 
             if (!isset($this->foreignKeys[$name])) {
                 $this->foreignKeys[$name] = new ForeignKeyInfo($name);
@@ -327,9 +326,11 @@ class PgSQLTableInfo extends TableInfo {
         include_once 'creole/metadata/IndexInfo.php';
 
         // columns have to be loaded first
-        if (!$this->colsLoaded) $this->initColumns();
+        if (!$this->colsLoaded) {
+            $this->initColumns();
+        }
 
-		$result = pg_query ($this->conn->getResource(), sprintf ("SELECT
+        $result = pg_query($this->conn->getResource(), sprintf('SELECT
 													      DISTINCT ON(cls.relname)
 													      cls.relname as idxname,
 													      indkey,
@@ -337,50 +338,48 @@ class PgSQLTableInfo extends TableInfo {
 													FROM pg_index idx
 													     JOIN pg_class cls ON cls.oid=indexrelid
 													WHERE indrelid = %d AND NOT indisprimary
-													ORDER BY cls.relname", $this->oid));
-
+													ORDER BY cls.relname', $this->oid));
 
         if (!$result) {
-            throw new SQLException("Could not list indexes keys for table: " . $this->name, pg_last_error($this->conn->getResource()));
+            throw new SQLException('Could not list indexes keys for table: '.$this->name, pg_last_error($this->conn->getResource()));
         }
 
-        while($row = pg_fetch_assoc($result)) {
-            $name = $row["idxname"];
-            $unique = ($row["indisunique"] == 't') ? true : false;
+        while ($row = pg_fetch_assoc($result)) {
+            $name = $row['idxname'];
+            $unique = ('t' == $row['indisunique']) ? true : false;
             if (!isset($this->indexes[$name])) {
                 $this->indexes[$name] = new IndexInfo($name, $unique);
             }
-            $arrColumns = explode (' ', $row['indkey']);
-            foreach ($arrColumns as $intColNum)
-            {
-	            $result2 = pg_query ($this->conn->getResource(), sprintf ("SELECT a.attname
+            $arrColumns = explode(' ', $row['indkey']);
+            foreach ($arrColumns as $intColNum) {
+                $result2 = pg_query($this->conn->getResource(), sprintf("SELECT a.attname
 															FROM pg_catalog.pg_class c JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid
 															WHERE c.oid = '%s' AND a.attnum = %d AND NOT a.attisdropped
 															ORDER BY a.attnum", $this->oid, $intColNum));
-				if (!$result2)
-				{
-            		throw new SQLException("Could not list indexes keys for table: " . $this->name, pg_last_error($this->conn->getResource()));
-				}
-				$row2 = pg_fetch_assoc($result2);
-	            $this->indexes[$name]->addColumn($this->columns[ $row2['attname'] ]);
-			} // foreach ($arrColumns as $intColNum)
+                if (!$result2) {
+                    throw new SQLException('Could not list indexes keys for table: '.$this->name, pg_last_error($this->conn->getResource()));
+                }
+                $row2 = pg_fetch_assoc($result2);
+                $this->indexes[$name]->addColumn($this->columns[$row2['attname']]);
+            } // foreach ($arrColumns as $intColNum)
         }
 
         $this->indexesLoaded = true;
     }
 
     /** Loads the primary keys for this table. */
-    protected function initPrimaryKey() {
-
+    protected function initPrimaryKey()
+    {
         include_once 'creole/metadata/PrimaryKeyInfo.php';
 
-
         // columns have to be loaded first
-        if (!$this->colsLoaded) $this->initColumns();
+        if (!$this->colsLoaded) {
+            $this->initColumns();
+        }
 
         // Primary Keys
-        
-        $result = pg_query($this->conn->getResource(), sprintf ("SELECT
+
+        $result = pg_query($this->conn->getResource(), sprintf('SELECT
 													      DISTINCT ON(cls.relname)
 													      cls.relname as idxname,
 													      indkey,
@@ -388,36 +387,31 @@ class PgSQLTableInfo extends TableInfo {
 													FROM pg_index idx
 													     JOIN pg_class cls ON cls.oid=indexrelid
 													WHERE indrelid = %s AND indisprimary
-													ORDER BY cls.relname", $this->oid));
+													ORDER BY cls.relname', $this->oid));
         if (!$result) {
-            throw new SQLException("Could not list primary keys for table: " . $this->name, pg_last_error($this->conn->getResource()));
+            throw new SQLException('Could not list primary keys for table: '.$this->name, pg_last_error($this->conn->getResource()));
         }
 
         // Loop through the returned results, grouping the same key_name together
         // adding each column for that key.
 
-        while($row = pg_fetch_assoc($result)) {
-            $arrColumns = explode (' ', $row['indkey']);
-            foreach ($arrColumns as $intColNum)
-            {
-	            $result2 = pg_query ($this->conn->getResource(), sprintf ("SELECT a.attname
+        while ($row = pg_fetch_assoc($result)) {
+            $arrColumns = explode(' ', $row['indkey']);
+            foreach ($arrColumns as $intColNum) {
+                $result2 = pg_query($this->conn->getResource(), sprintf("SELECT a.attname
 															FROM pg_catalog.pg_class c JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid
 															WHERE c.oid = '%s' AND a.attnum = %d AND NOT a.attisdropped
 															ORDER BY a.attnum", $this->oid, $intColNum));
-				if (!$result2)
-				{
-            		throw new SQLException("Could not list indexes keys for table: " . $this->name, pg_last_error($this->conn->getResource()));
-				}
-				$row2 = pg_fetch_assoc($result2);
-				if (!isset($this->primaryKey)) {
-					$this->primaryKey = new PrimaryKeyInfo($row2['attname']);
-				}
-	            $this->primaryKey->addColumn($this->columns[ $row2['attname'] ]);
-			} // foreach ($arrColumns as $intColNum)
+                if (!$result2) {
+                    throw new SQLException('Could not list indexes keys for table: '.$this->name, pg_last_error($this->conn->getResource()));
+                }
+                $row2 = pg_fetch_assoc($result2);
+                if (!isset($this->primaryKey)) {
+                    $this->primaryKey = new PrimaryKeyInfo($row2['attname']);
+                }
+                $this->primaryKey->addColumn($this->columns[$row2['attname']]);
+            } // foreach ($arrColumns as $intColNum)
         }
         $this->pkLoaded = true;
     }
-
-    
-
 }

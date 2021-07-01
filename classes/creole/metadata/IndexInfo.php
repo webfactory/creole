@@ -23,24 +23,24 @@
  * Represents an index.
  *
  * @author    Hans Lellelid <hans@xmpl.org>
+ *
  * @version   $Revision: 1.7 $
- * @package   creole.metadata
  */
-class IndexInfo {
-
+class IndexInfo
+{
     /** name of the index */
     private $name;
 
     /** columns in this index */
-    private $columns = array();
+    private $columns = [];
 
     /** uniqueness flag */
     private $isUnique = false;
 
     /** additional vendor specific information */
-    private $vendorSpecificInfo = array();
+    private $vendorSpecificInfo = [];
 
-    function __construct($name, $isUnique = false, $vendorInfo = array())
+    public function __construct($name, $isUnique = false, $vendorInfo = [])
     {
         $this->name = $name;
         $this->isUnique = $isUnique;
@@ -59,6 +59,7 @@ class IndexInfo {
 
     /**
      * Get vendor specific optional information for this index.
+     *
      * @return array vendorSpecificInfo[]
      */
     public function getVendorSpecificInfo()
@@ -80,5 +81,4 @@ class IndexInfo {
     {
         return $this->name;
     }
-
 }

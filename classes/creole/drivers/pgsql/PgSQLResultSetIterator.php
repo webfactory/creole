@@ -23,87 +23,89 @@
  * Optimized iterator for PostgreSQL, based off of SQLite iterator.
  * Testing with SeekableIterator, no idea if it will keep this
  * functionality or what uses it or even how to use it as yet.
- * 
+ *
  * @author    Cameron Brunner <webmaster@animetorrents.com>
+ *
  * @version   $Revision: 1.1 $
- * @package   creole.drivers.pgsql
  */
-class PgSQLResultSetIterator implements SeekableIterator, Countable {
-
+class PgSQLResultSetIterator implements SeekableIterator, Countable
+{
     private $result;
     private $pos = 0;
     private $fetchmode;
     private $row_count;
     private $rs;
-    
+
     /**
      * Construct the iterator.
-     * @param PgSQLResultSet $rs
      */
     public function __construct(PgSQLResultSet $rs)
     {
         $this->result = $rs->getResource();
         $this->fetchmode = $rs->getFetchmode();
-		$this->row_count = $rs->getRecordCount();
-		$this->rs = $rs; // This is to address reference count bug: http://creole.phpdb.org/trac/ticket/6
+        $this->row_count = $rs->getRecordCount();
+        $this->rs = $rs; // This is to address reference count bug: http://creole.phpdb.org/trac/ticket/6
     }
-    
+
     /**
      * This method actually has no effect, since we do not rewind ResultSet for iteration.
      */
-    function rewind()
-    {        
+    public function rewind()
+    {
         $this->pos = 0;
     }
-    
-    function valid()
+
+    public function valid()
     {
-		return ( $this->pos < $this->row_count );
+        return  $this->pos < $this->row_count;
     }
-    
+
     /**
      * Returns the cursor position.  Note that this will not necessarily
      * be 1 for the first row, since no rewind is performed at beginning
      * of iteration.
+     *
      * @return int
      */
-    function key()
+    public function key()
     {
         return $this->pos;
     }
-    
+
     /**
      * Returns the row (assoc array) at current cursor pos.
+     *
      * @return array
      */
-    function current()
+    public function current()
     {
-       return pg_fetch_array($this->result, $this->pos, $this->fetchmode);
+        return pg_fetch_array($this->result, $this->pos, $this->fetchmode);
     }
-    
+
     /**
      * Advances internal cursor pos.
      */
-    function next()
+    public function next()
     {
-        $this->pos++;
+        ++$this->pos;
     }
 
     /**
      * Sets cursor to specific value.
      */
-    function seek ( $index )
+    public function seek($index)
     {
-    	if ( ! is_int ( $index ) ) {
-			throw new InvalidArgumentException ( 'Invalid arguement to seek' );
-		}
-		if ( $index < 0 || $index > $this->row_count ) {
-			throw new OutOfBoundsException ( 'Invalid seek position' );
-		}
-		$this->pos = $index;
+        if (!is_int($index)) {
+            throw new InvalidArgumentException('Invalid arguement to seek');
+        }
+        if ($index < 0 || $index > $this->row_count) {
+            throw new OutOfBoundsException('Invalid seek position');
+        }
+        $this->pos = $index;
     }
 
-    function count ( ) {
-		return $this->row_count;
+    public function count()
+    {
+        return $this->row_count;
     }
 }

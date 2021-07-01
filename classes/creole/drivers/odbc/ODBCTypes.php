@@ -26,11 +26,11 @@ require_once 'creole/CreoleTypes.php';
  * ODBC types / type map.
  *
  * @author    Dave Lawson <dlawson@masterytech.com>
+ *
  * @version   $Revision: 1.1 $
- * @package   creole.drivers.odbc
  */
-class ODBCTypes extends CreoleTypes {
-
+class ODBCTypes extends CreoleTypes
+{
     /**
      * Map ODBC native types to Creole (JDBC) types.
      */
@@ -50,28 +50,29 @@ class ODBCTypes extends CreoleTypes {
      */
     public static function loadTypeMap($conn = null)
     {
-        if (self::$typeMap !== null && count(self::$typeMap) > 0)
+        if (null !== self::$typeMap && count(self::$typeMap) > 0) {
             return;
+        }
 
-        if ($conn == null)
+        if (null == $conn) {
             throw new SQLException('No connection specified when loading ODBC type map.');
+        }
 
-        self::$typeMap = array();
+        self::$typeMap = [];
 
         $result = @odbc_gettypeinfo($conn->getResource());
 
-        if ($result === false)
+        if (false === $result) {
             throw new SQLException('Failed to retrieve type info.', $conn->nativeError());
+        }
 
         $rowNum = 1;
 
-        while (odbc_fetch_row($result, $rowNum++))
-        {
+        while (odbc_fetch_row($result, $rowNum++)) {
             $odbctypeid = odbc_result($result, 'DATA_TYPE');
             $odbctypename = odbc_result($result, 'TYPE_NAME');
 
-            switch ($odbctypeid)
-            {
+            switch ($odbctypeid) {
                 case SQL_CHAR:
                     self::$typeMap[$odbctypename] = CreoleTypes::CHAR;
                     break;
@@ -150,13 +151,16 @@ class ODBCTypes extends CreoleTypes {
     /**
      * This method returns the generic Creole (JDBC-like) type
      * when given the native db type.
+     *
      * @param string $nativeType DB native type (e.g. 'TEXT', 'byetea', etc.).
+     *
      * @return int Creole native type (e.g. CreoleTypes::LONGVARCHAR, CreoleTypes::BINARY, etc.).
      */
     public static function getType($nativeType)
     {
-        if (!self::$typeMap)
+        if (!self::$typeMap) {
             self::loadTypeMap();
+        }
 
         $t = strtoupper($nativeType);
 
@@ -172,18 +176,21 @@ class ODBCTypes extends CreoleTypes {
      * Creole (JDBC-like) type.
      * If there is more than one matching native type, then the LAST defined
      * native type will be returned.
+     *
      * @param int $creoleType
+     *
      * @return string Native type string.
      */
     public static function getNativeType($creoleType)
     {
-        if (!self::$typeMap)
+        if (!self::$typeMap) {
             self::loadTypeMap();
+        }
 
-        if (self::$reverseMap === null) {
+        if (null === self::$reverseMap) {
             self::$reverseMap = array_flip(self::$typeMap);
         }
+
         return @self::$reverseMap[$creoleType];
     }
-
 }

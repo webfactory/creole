@@ -38,13 +38,12 @@ include_once 'creole/Connection.php';
  * Note that you register your Connection class because the Connection class is responsible for calling the other
  * driver classes (e.g. ResultSet, PreparedStatement, etc.).
  *
- *
  * @author    Hans Lellelid <hans@xmpl.org>
+ *
  * @version   $Revision: 1.14 $
- * @package   creole
  */
-class Creole {
-
+class Creole
+{
     /**
      * Constant that indicates a connection object should be used.
      */
@@ -53,48 +52,53 @@ class Creole {
     /**
      * Flag to pass to the connection to indicate that no case conversions
      * should be performed by ResultSet on keys of fetched rows.
-	 * @deprecated use COMPAT_ASSOC_LOWER
+     *
+     * @deprecated use COMPAT_ASSOC_LOWER
      */
     const NO_ASSOC_LOWER = 16;
-	
+
     /**
      * Flag to pass to the connection to indicate that a to-lower case conversion
      * should be performed by ResultSet on keys of fetched rows.
      */
-	const COMPAT_ASSOC_LOWER = 32;
+    const COMPAT_ASSOC_LOWER = 32;
 
     /**
      * Flag to pass to the connection to indicate that an rtrim() should be performed
-	 * on strings (using ResultSet->getString(), etc.).
+     * on strings (using ResultSet->getString(), etc.).
      */
-	const COMPAT_RTRIM_STRING = 64;
-	
-	/**
-	 * Flag to indicate that all compatibility flags should be set.
-	 */
-	const COMPAT_ALL = 96;
-	
+    const COMPAT_RTRIM_STRING = 64;
+
+    /**
+     * Flag to indicate that all compatibility flags should be set.
+     */
+    const COMPAT_ALL = 96;
+
     /**
      * Map of built-in drivers.
-     * Change or add your own using registerDriver()
+     * Change or add your own using registerDriver().
+     *
      * @see registerDriver()
+     *
      * @var array Hash mapping phptype => driver class (in dot-path notation, e.g. 'mysql' => 'creole.drivers.mysql.MySQLConnection').
      */
-    private static $driverMap = array(  'mysql' => 'creole.drivers.mysql.MySQLConnection',
+    private static $driverMap = ['mysql' => 'creole.drivers.mysql.MySQLConnection',
                                         'mysqli' => 'creole.drivers.mysqli.MySQLiConnection',
                                         'pgsql' => 'creole.drivers.pgsql.PgSQLConnection',
                                         'sqlite' => 'creole.drivers.sqlite.SQLiteConnection',
                                         'oracle' => 'creole.drivers.oracle.OCI8Connection',
                                         'mssql' => 'creole.drivers.mssql.MSSQLConnection',
-                                        'odbc' => 'creole.drivers.odbc.ODBCConnection'
-                                       );
+                                        'odbc' => 'creole.drivers.odbc.ODBCConnection',
+                                       ];
 
     /**
-     * Map of already established connections
+     * Map of already established connections.
+     *
      * @see getConnection()
+     *
      * @var array Hash mapping connection DSN => Connection instance
      */
-    private static $connectionMap = array();
+    private static $connectionMap = [];
 
     /**
      * Register your own RDBMS driver class.
@@ -116,11 +120,12 @@ class Creole {
      * class.  In the future we may implement a more "packaged" approach to drivers; for now we
      * want to keep it simple.
      *
-     * @param string $phptype   The phptype (mysql, mssql, etc.). This is first part of DSN URL (e.g. mysql://localhost/...).
-     *                          You may also specify '*' to register a driver that will "wrap" the any native drivers.
-     * @param string $dotpath   A dot-path locating your class.  For example 'creole.drivers.mssql.MSSQLConnection'
-     *                          will be included like: include 'creole/drivers/mssql/MSSQLConnection.php' and the
-     *                          classname will be assumed to be 'MSSQLConnection'.
+     * @param string $phptype The phptype (mysql, mssql, etc.). This is first part of DSN URL (e.g. mysql://localhost/...).
+     *                        You may also specify '*' to register a driver that will "wrap" the any native drivers.
+     * @param string $dotpath A dot-path locating your class.  For example 'creole.drivers.mssql.MSSQLConnection'
+     *                        will be included like: include 'creole/drivers/mssql/MSSQLConnection.php' and the
+     *                        classname will be assumed to be 'MSSQLConnection'.
+     *
      * @return void
      */
     public static function registerDriver($phptype, $dotpath)
@@ -131,7 +136,9 @@ class Creole {
     /**
      * Removes the driver for a PHP type.  Note that this will remove user-registered
      * drivers _and_ the default drivers.
+     *
      * @param string $phptype The PHP type for driver to de-register.
+     *
      * @see registerDriver()
      */
     public static function deregisterDriver($phptype)
@@ -141,9 +148,11 @@ class Creole {
 
     /**
      * Returns the class path to the driver registered for specified type.
+     *
      * @param string $phptype The phptype handled by driver (e.g. 'mysql', 'mssql', '*').
+     *
      * @return string The driver class in dot-path notation (e.g. creole.drivers.mssql.MSSQLConnection)
-     *                  or NULL if no registered driver found.
+     *                or NULL if no registered driver found.
      */
     public static function getDriver($phptype)
     {
@@ -156,16 +165,18 @@ class Creole {
 
     /**
      * Create a new DB connection object and connect to the specified
-     * database
+     * database.
      *
      * @param mixed $dsn "data source name", see the self::parseDSN
-     * method for a description of the dsn format.  Can also be
+     *                   method for a description of the dsn format.  Can also be
      * specified as an array of the format returned by DB::parseDSN().
 
      * @param int $flags Connection flags (e.g. PERSISTENT).
      *
      * @return Connection Newly created DB connection object
+     *
      * @throws SQLException
+     *
      * @see self::parseDSN()
      */
     public static function getConnection($dsn, $flags = 0)
@@ -175,37 +186,40 @@ class Creole {
         } else {
             $dsninfo = self::parseDSN($dsn);
         }
-		
-		// gather any flags from the DSN
-		if ( isset ( $dsninfo['persistent'] ) && ! empty ( $dsninfo['persistent'] ) )
-			$flags |= Creole::PERSISTENT;
-		if ( isset ( $dsninfo['compat_assoc_lower'] ) && ! empty ( $dsninfo['compat_assoc_lower'] ) )
-			$flags |= Creole::COMPAT_ASSOC_LOWER;
-		if ( isset ( $dsninfo['compat_rtrim_string'] ) && ! empty ( $dsninfo['compat_rtrim_string'] ) )
-			$flags |= Creole::COMPAT_RTRIM_STRING;
-		if ( isset ( $dsninfo['compat_all'] ) && ! empty ( $dsninfo['compat_all'] ) )
-			$flags |= Creole::COMPAT_ALL;
-		
-		if ($flags & Creole::NO_ASSOC_LOWER) {
-			trigger_error("The Creole::NO_ASSOC_LOWER flag has been deprecated, and is now the default behavior. Use Creole::COMPAT_ASSOC_LOWER to lowercase resulset keys.", E_USER_WARNING);
-		}
+
+        // gather any flags from the DSN
+        if (isset($dsninfo['persistent']) && !empty($dsninfo['persistent'])) {
+            $flags |= Creole::PERSISTENT;
+        }
+        if (isset($dsninfo['compat_assoc_lower']) && !empty($dsninfo['compat_assoc_lower'])) {
+            $flags |= Creole::COMPAT_ASSOC_LOWER;
+        }
+        if (isset($dsninfo['compat_rtrim_string']) && !empty($dsninfo['compat_rtrim_string'])) {
+            $flags |= Creole::COMPAT_RTRIM_STRING;
+        }
+        if (isset($dsninfo['compat_all']) && !empty($dsninfo['compat_all'])) {
+            $flags |= Creole::COMPAT_ALL;
+        }
+
+        if ($flags & Creole::NO_ASSOC_LOWER) {
+            trigger_error('The Creole::NO_ASSOC_LOWER flag has been deprecated, and is now the default behavior. Use Creole::COMPAT_ASSOC_LOWER to lowercase resulset keys.', E_USER_WARNING);
+        }
 
         // sort $dsninfo by keys so the serialized result is always the same
         // for identical connection parameters, no matter what their order is
         ksort($dsninfo);
-        $connectionMapKey = crc32(serialize($dsninfo + array('compat_flags' => ($flags & Creole::COMPAT_ALL))));
+        $connectionMapKey = crc32(serialize($dsninfo + ['compat_flags' => ($flags & Creole::COMPAT_ALL)]));
 
         // see if we already have a connection with these parameters cached
-        if(isset(self::$connectionMap[$connectionMapKey]))
-        {
+        if (isset(self::$connectionMap[$connectionMapKey])) {
             // persistent connections will be used if a non-persistent one was requested and is available
             // but a persistent connection will be created if a non-persistent one is present
 
-	    // TODO: impliment auto close of non persistent and replacing the
-	    // non persistent with the persistent object so as we dont have
-	    // both links open for no reason
+            // TODO: impliment auto close of non persistent and replacing the
+            // non persistent with the persistent object so as we dont have
+            // both links open for no reason
 
-            if( isset(self::$connectionMap[$connectionMapKey][1]) ) { // is persistent
+            if (isset(self::$connectionMap[$connectionMapKey][1])) { // is persistent
                 // a persistent connection with these parameters is already there,
                 // so we return it, no matter what was specified as persistent flag
                 $con = self::$connectionMap[$connectionMapKey][1];
@@ -217,9 +231,10 @@ class Creole {
 
             // if we're here, a non-persistent connection was already there, but
             // the user wants a persistent one, so it will be created
-            
-            if ($con->isConnected())
-                return $con;            
+
+            if ($con->isConnected()) {
+                return $con;
+            }
         }
 
         // support "catchall" drivers which will themselves handle the details of connecting
@@ -244,15 +259,16 @@ class Creole {
 
         try {
             $obj->connect($dsninfo, $flags);
-        } catch(SQLException $sqle) {
+        } catch (SQLException $sqle) {
             $sqle->setUserInfo($dsninfo);
             throw $sqle;
         }
-		$persistent = ($flags & Creole::PERSISTENT) === Creole::PERSISTENT;
-        return self::$connectionMap[$connectionMapKey][(int)$persistent] = $obj;
+        $persistent = ($flags & Creole::PERSISTENT) === Creole::PERSISTENT;
+
+        return self::$connectionMap[$connectionMapKey][(int) $persistent] = $obj;
     }
-    
-   /**
+
+    /**
      * Parse a data source name.
      *
      * This isn't quite as powerful as DB::parseDSN(); it's also a lot simpler, a lot faster,
@@ -281,6 +297,7 @@ class Creole {
      *  phptype
      *
      * @param string $dsn Data Source Name to be parsed
+     *
      * @return array An associative array
      */
     public static function parseDSN($dsn)
@@ -289,72 +306,69 @@ class Creole {
             return $dsn;
         }
 
-        $parsed = array(
-            'phptype'  => null,
+        $parsed = [
+            'phptype' => null,
             'username' => null,
             'password' => null,
             'protocol' => null,
             'hostspec' => null,
-            'port'     => null,
-            'socket'   => null,
-            'database' => null
-        );
+            'port' => null,
+            'socket' => null,
+            'database' => null,
+        ];
 
-		$preg_query = "!^(([a-z0-9]+)(\(([^()]+)\))?)(://((((([^@/:]+)(:([^@/]+))?)@)?((([a-z]+)\((([^?():]+)(:([^()?]+))?)\))|((([^/?:]+)(:([^/?]+))?))))/?)?([^?]+)?(\?(.+))?)?$!i";
-		
-		$info = array();
-		
-		if (preg_match($preg_query,$dsn,$info)) { // only if it is matching
-						
-			$parsed['phptype'] = @$info[2]; // Group 2 should always exist.
-			
-			// Don't know what to do with Group 4: phptype(xx) should => check first if available
-			
-			if (isset($info[5])) { // There is more than just the phptype
-				
-				if (strlen($info[10]) > 0) { // There is a username specified
-					$parsed['username'] = @$info[10];
-				}
-				
-				if (strlen($info[12]) > 0) { // There is a password specified
-					$parsed['password'] = @$info[12];
-				}
-				
-				if (strlen($info[15]) > 0) { // There is a protocol specified: protocol(hostspec)
-					$parsed['protocol'] = @$info[15];
-					
-					if ($parsed["protocol"] === "unix") {
-						$parsed['socket'] = @$info[16];
-					} else {
-						$parsed["hostspec"] = @$info[17];
-						if (strlen($info[19]) > 0) {
-							$parsed["port"] = @$info[19];
-						}
-					}
-				} elseif (strlen($info[20]) > 0) {
-					$parsed["hostspec"] = @$info[22];
-					
-					if ((isset($info[24]) && (strlen($info[24]) > 0))) { // There is a port set (not always available) 
-						$parsed["port"] = @$info[24];
-					}
-				}
-				
-				if ((isset($info[25])) && (strlen($info[25]) > 0)) { // There is a database
-					$parsed["database"] = @$info[25];
-				}
-				
-				if ((isset($info[27])) && (strlen($info[27]) >0)) { // There is a query
-					$opts = explode('&', $info[27]);
-					foreach ($opts as $opt) {
-						list($key, $value) = explode('=', $opt);
-						if (!isset($parsed[$key])) { // don't allow params overwrite
-							$parsed[$key] = urldecode($value);
-						}
-					}	
-				}
-				
-			}
-		}
+        $preg_query = "!^(([a-z0-9]+)(\(([^()]+)\))?)(://((((([^@/:]+)(:([^@/]+))?)@)?((([a-z]+)\((([^?():]+)(:([^()?]+))?)\))|((([^/?:]+)(:([^/?]+))?))))/?)?([^?]+)?(\?(.+))?)?$!i";
+
+        $info = [];
+
+        if (preg_match($preg_query, $dsn, $info)) { // only if it is matching
+            $parsed['phptype'] = @$info[2]; // Group 2 should always exist.
+
+            // Don't know what to do with Group 4: phptype(xx) should => check first if available
+
+            if (isset($info[5])) { // There is more than just the phptype
+                if (strlen($info[10]) > 0) { // There is a username specified
+                    $parsed['username'] = @$info[10];
+                }
+
+                if (strlen($info[12]) > 0) { // There is a password specified
+                    $parsed['password'] = @$info[12];
+                }
+
+                if (strlen($info[15]) > 0) { // There is a protocol specified: protocol(hostspec)
+                    $parsed['protocol'] = @$info[15];
+
+                    if ('unix' === $parsed['protocol']) {
+                        $parsed['socket'] = @$info[16];
+                    } else {
+                        $parsed['hostspec'] = @$info[17];
+                        if (strlen($info[19]) > 0) {
+                            $parsed['port'] = @$info[19];
+                        }
+                    }
+                } elseif (strlen($info[20]) > 0) {
+                    $parsed['hostspec'] = @$info[22];
+
+                    if ((isset($info[24]) && (strlen($info[24]) > 0))) { // There is a port set (not always available)
+                        $parsed['port'] = @$info[24];
+                    }
+                }
+
+                if ((isset($info[25])) && (strlen($info[25]) > 0)) { // There is a database
+                    $parsed['database'] = @$info[25];
+                }
+
+                if ((isset($info[27])) && (strlen($info[27]) > 0)) { // There is a query
+                    $opts = explode('&', $info[27]);
+                    foreach ($opts as $opt) {
+                        list($key, $value) = explode('=', $opt);
+                        if (!isset($parsed[$key])) { // don't allow params overwrite
+                            $parsed[$key] = urldecode($value);
+                        }
+                    }
+                }
+            }
+        }
 
         return array_map(function ($value) { return urldecode($value); }, $parsed);
     }
@@ -363,28 +377,32 @@ class Creole {
      * Include once a file specified in DOT notation.
      * Package notation is expected to be relative to a location
      * on the PHP include_path.
+     *
      * @param string $class
+     *
      * @return string unqualified classname
+     *
      * @throws SQLException - if class does not exist and cannot load file
      *                      - if after loading file class still does not exist
      */
-    public static function import($class) {
+    public static function import($class)
+    {
         if (!class_exists($class, false)) {
-            $path = strtr($class, '.', DIRECTORY_SEPARATOR) . '.php';
-            $ret = include_once($path);
-            if ($ret === false) {
-                throw new SQLException("Unable to load driver class: " . $class);
+            $path = strtr($class, '.', DIRECTORY_SEPARATOR).'.php';
+            $ret = include_once $path;
+            if (false === $ret) {
+                throw new SQLException('Unable to load driver class: '.$class);
             }
             // get just classname ('path.to.ClassName' -> 'ClassName')
             $pos = strrpos($class, '.');
-            if ($pos !== false) {
+            if (false !== $pos) {
                 $class = substr($class, $pos + 1);
             }
             if (!class_exists($class)) {
                 throw new SQLException("Unable to find loaded class: $class (Hint: make sure classname matches filename)");
             }
         }
+
         return $class;
     }
-
 }

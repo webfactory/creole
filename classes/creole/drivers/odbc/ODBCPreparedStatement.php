@@ -27,21 +27,23 @@ require_once 'creole/util/Lob.php';
  * ODBC specific PreparedStatement functions.
  *
  * @author    Dave Lawson <dlawson@masterytech.com>
+ *
  * @version   $Revision: 1.4 $
- * @package   creole.drivers.odbc
  */
 class ODBCPreparedStatement extends PreparedStatementCommon implements PreparedStatement
 {
     /**
      * This does nothing since ODBC natively supports prepared statements.
+     *
      * @see PreparedStatementCommon::replaceParams()
      */
     protected function replaceParams()
     {
-        if ($this->conn->getAdapter()->emulatePrepareStmt())
+        if ($this->conn->getAdapter()->emulatePrepareStmt()) {
             return parent::replaceParams();
-        else
+        } else {
             return $this->sql;
+        }
     }
 
     /**
@@ -49,47 +51,39 @@ class ODBCPreparedStatement extends PreparedStatementCommon implements PreparedS
      */
     protected function _execute($sql, $params, $fetchmode, $isupdate)
     {
-        if ($this->resultSet)
-        {
+        if ($this->resultSet) {
             $this->resultSet->close();
             $this->resultSet = null;
         }
 
         $this->updateCount = null;
 
-        if ($this->conn->getAdapter()->emulatePrepareStmt())
-        {
+        if ($this->conn->getAdapter()->emulatePrepareStmt()) {
             $stmt = @odbc_exec($this->conn->getResource(), $sql);
-            $ret = ($stmt !== false);
-        }
-        else
-        {
+            $ret = (false !== $stmt);
+        } else {
             // Trim surrounding quotes added from default set methods.
             // Exception: for LOB-based parameters, odbc_execute() will
             // accept a filename surrounded by single-quotes.
-            foreach ($this->boundInVars as $idx => $var)
-            {
-                if ($var instanceof Lob)
-                {
+            foreach ($this->boundInVars as $idx => $var) {
+                if ($var instanceof Lob) {
                     $file = ($isupdate ? $var->getInputFile() : $var->getOutputFile());
                     $this->boundInVars[$idx] = "'$file'";
-                }
-                else if (is_string($var))
-                {
+                } elseif (is_string($var)) {
                     $this->boundInVars[$idx] = trim($var, "\"\'");
                 }
             }
 
             $stmt = @odbc_prepare($this->conn->getResource(), $sql);
 
-            if ($stmt === FALSE)
+            if (false === $stmt) {
                 throw new SQLException('Could not prepare query', $this->conn->nativeError(), $sql);
+            }
 
             $ret = @odbc_execute($stmt, $this->boundInVars);
         }
 
-        if ($ret === FALSE)
-        {
+        if (false === $ret) {
             @odbc_free_result($stmt);
             throw new SQLException('Could not execute query', $this->conn->nativeError(), $sql);
         }
@@ -117,27 +111,26 @@ class ODBCPreparedStatement extends PreparedStatementCommon implements PreparedS
             $params = null;
             $fetchmode = null;
             break;
-        }	
-        
+        }
+
         // Set any params passed directly
         if (isset($params)) {
-            for($i=0,$cnt=count($params); $i < $cnt; $i++) {
-                $this->set($i+1, $params[$i]);
+            for ($i = 0,$cnt = count($params); $i < $cnt; ++$i) {
+                $this->set($i + 1, $params[$i]);
             }
         }
-        
+
         $sql = $this->replaceParams();
-        
-        if ($this->conn->getAdapter()->hasLimitOffset())
-        {
-            if ($this->limit > 0 || $this->offset > 0)
+
+        if ($this->conn->getAdapter()->hasLimitOffset()) {
+            if ($this->limit > 0 || $this->offset > 0) {
                 $this->conn->applyLimit($sql, $this->offset, $this->limit);
+            }
         }
 
         $this->resultSet = $this->_execute($sql, $params, $fetchmode, false);
 
-        if (!$this->conn->getAdapter()->hasLimitOffset())
-        {
+        if (!$this->conn->getAdapter()->hasLimitOffset()) {
             $this->resultSet->_setOffset($this->offset);
             $this->resultSet->_setLimit($this->limit);
         }
@@ -152,8 +145,8 @@ class ODBCPreparedStatement extends PreparedStatementCommon implements PreparedS
     {
         // Set any params passed directly
         if ($params) {
-            for($i=0,$cnt=count($params); $i < $cnt; $i++) {
-                $this->set($i+1, $params[$i]);
+            for ($i = 0,$cnt = count($params); $i < $cnt; ++$i) {
+                $this->set($i + 1, $params[$i]);
             }
         }
 
@@ -169,9 +162,10 @@ class ODBCPreparedStatement extends PreparedStatementCommon implements PreparedS
      */
     protected function escape($str)
     {
-        if ($this->conn->getAdapter()->emulatePrepareStmt())
+        if ($this->conn->getAdapter()->emulatePrepareStmt()) {
             return $this->conn->getAdapter()->escape($str);
-            
+        }
+
         // Nothing to do here. odbc_execute() takes care of escaping strings.
         return $str;
     }
@@ -179,68 +173,67 @@ class ODBCPreparedStatement extends PreparedStatementCommon implements PreparedS
     /**
      * @see PreparedStatement::setNull()
      */
-    function setNull($paramIndex)
+    public function setNull($paramIndex)
     {
-    	$this->sql_cache_valid = false;
+        $this->sql_cache_valid = false;
         $this->boundInVars[$paramIndex] = null;
     }
 
     /**
      * @see PreparedStatement::setBlob()
      */
-    function setBlob($paramIndex, $blob)
+    public function setBlob($paramIndex, $blob)
     {
-        if ($this->conn->getAdapter()->emulatePrepareStmt())
+        if ($this->conn->getAdapter()->emulatePrepareStmt()) {
             return parent::setBlob($paramIndex, $blob);
-            
-    	$this->sql_cache_valid = false;
-        if ($blob === null)
-        {
+        }
+
+        $this->sql_cache_valid = false;
+        if (null === $blob) {
             $this->setNull($paramIndex);
+
             return;
         }
 
-        if ($blob instanceof Blob)
-        {
-            if ($blob->isFromFile() && !$blob->isModified())
-            {
+        if ($blob instanceof Blob) {
+            if ($blob->isFromFile() && !$blob->isModified()) {
                 $this->boundInVars[$paramIndex] = $blob;
+
                 return;
             }
 
             $blob = $blob->__toString();
         }
 
-        $this->boundInVars[$paramIndex] = "'" . $this->escape($blob) . "'";
+        $this->boundInVars[$paramIndex] = "'".$this->escape($blob)."'";
     }
 
     /**
      * @see PreparedStatement::setClob()
      */
-    function setClob($paramIndex, $clob)
+    public function setClob($paramIndex, $clob)
     {
-        if ($this->conn->getAdapter()->emulatePrepareStmt())
+        if ($this->conn->getAdapter()->emulatePrepareStmt()) {
             return parent::setClob($paramIndex, $clob);
+        }
 
-    	$this->sql_cache_valid = false;
-        if ($clob === null)
-        {
+        $this->sql_cache_valid = false;
+        if (null === $clob) {
             $this->setNull($paramIndex);
+
             return;
         }
 
-        if ($clob instanceof Clob)
-        {
-            if ($clob->isFromFile() && !$clob->isModified())
-            {
+        if ($clob instanceof Clob) {
+            if ($clob->isFromFile() && !$clob->isModified()) {
                 $this->boundInVars[$paramIndex] = $clob;
+
                 return;
             }
 
             $clob = $clob->__toString();
         }
 
-        $this->boundInVars[$paramIndex] = "'" . $this->escape($clob) . "'";
+        $this->boundInVars[$paramIndex] = "'".$this->escape($clob)."'";
     }
-
 }

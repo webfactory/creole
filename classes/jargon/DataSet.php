@@ -17,8 +17,8 @@
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the LGPL. For more information please see
  * <http://creole.phpdb.org>.
- * 
- * This product includes software based on the Village framework,  
+ *
+ * This product includes software based on the Village framework,
  * http://share.whichever.com/index.php?SCREEN=village.
  */
 
@@ -27,10 +27,10 @@ require_once 'jargon/DataSetException.php';
 
 /**
  * The DataSet represents the results of a query.
- * 
+ *
  * It contains a collection of records and implements the IteratorAggregate
  * interface so that you can use the dataset in a foreach() {} loop.
- * 
+ *
  * <code>
  *     $ds = new TableDataSet($conn, "mytable");
  *  $ds->fetchRecords();
@@ -39,16 +39,16 @@ require_once 'jargon/DataSetException.php';
  *         $record->save();
  *  }
  * </code>
- * 
- * This class is extended by QueryDataSet and TableDataSet and should not be used directly. 
- * 
+ *
+ * This class is extended by QueryDataSet and TableDataSet and should not be used directly.
+ *
  * @author    Jon S. Stevens <jon@latchkey.com> (Village)
  * @author    Hans Lellelid <hans@xmpl.org> (Jargon)
+ *
  * @version   $Revision: 1.7 $
- * @package   jargon
  */
-abstract class DataSet implements IteratorAggregate {
-
+abstract class DataSet implements IteratorAggregate
+{
     /** indicates that all records should be retrieved during a fetch */
     const ALL_RECORDS = 0;
 
@@ -83,7 +83,7 @@ abstract class DataSet implements IteratorAggregate {
     protected $resultSet;
 
     /** the Statement for this DataSet */
-    protected $stmt;    
+    protected $stmt;
 
     /**
      * Return iterator (for IteratorAggregate interface).
@@ -92,33 +92,37 @@ abstract class DataSet implements IteratorAggregate {
      *     foreach($dataset as $record) {
      *         print "col1 = " . $record->getValue("col1") . "\n";
      *  }
-     * </code>
+     * </code>.
+     *
      * @return DataSetIterator
      */
     public function getIterator()
     {
         $it = new DataSetIterator($this);
+
         return $it;
     }
-    
+
     /**
-     * Gets the ResultSet for this DataSet
+     * Gets the ResultSet for this DataSet.
      *
      * @return ResultSet The result set for this DataSet
+     *
      * @throws DataSetException - if resultset is null
      */
     public function resultSet()
     {
-        if ($this->resultSet === null) {
-            throw new DataSetException ("ResultSet is null.");
-        }            
+        if (null === $this->resultSet) {
+            throw new DataSetException('ResultSet is null.');
+        }
+
         return $this->resultSet;
     }
 
     /**
-     * Check if all the records have been retrieve
+     * Check if all the records have been retrieve.
      *
-     * @return boolean True if all records have been retrieved
+     * @return bool True if all records have been retrieved
      */
     public function allRecordsRetrieved()
     {
@@ -126,72 +130,76 @@ abstract class DataSet implements IteratorAggregate {
     }
 
     /**
-      * Set all records retrieved
-      * @param boolean $set
-      * @return void
-      */
-    function setAllRecordsRetrieved($set)
+     * Set all records retrieved.
+     *
+     * @param bool $set
+     *
+     * @return void
+     */
+    public function setAllRecordsRetrieved($set)
     {
         $this->allRecordsRetrieved = $set;
     }
 
     /**
-      * Remove a record from the DataSet's internal storage
-      *
-      * @param  Record $rec
-      * @return Record The record removed
-      */
+     * Remove a record from the DataSet's internal storage.
+     *
+     * @return Record The record removed
+     */
     public function removeRecord(Record $rec)
     {
         $loc = array_search($rec, $this->records, true);
-        $removeRec = array_splice($this->records, $loc, 1);                 
+        $removeRec = array_splice($this->records, $loc, 1);
+
         return $removeRec;
     }
 
     /**
-      *  Remove all records from the DataSet and nulls those records out
-      *  and close() the DataSet.
-      *
-      * @return     an instance of myself
-      */
+     *  Remove all records from the DataSet and nulls those records out
+     *  and close() the DataSet.
+     *
+     * @return an instance of myself
+     */
     public function clearRecords()
     {
         $this->records = null;
+
         return $this;
     }
 
     /**
-      * Removes the records from the DataSet, but does not null the records out
-      *
-      * @return     an instance of myself
-      */
+     * Removes the records from the DataSet, but does not null the records out.
+     *
+     * @return an instance of myself
+     */
     public function releaseRecords()
     {
         $this->records = null;
         $this->recordRetrievedCount = 0;
         $this->lastFetchSize = 0;
         $this->setAllRecordsRetrieved(false);
+
         return $this;
     }
 
     /**
-      * Releases the records, closes the ResultSet and the Statement, and
-      * nulls the Schema and Connection references.
-      *
-      * @return void
-      */
+     * Releases the records, closes the ResultSet and the Statement, and
+     * nulls the Schema and Connection references.
+     *
+     * @return void
+     */
     public function close()
     {
         $this->releaseRecords();
         $this->schema = null;
 
-        if ($this->resultSet !== null && !$this instanceof QueryDataSet) {
+        if (null !== $this->resultSet && !$this instanceof QueryDataSet) {
             $this->resultSet->close();
         }
-            
+
         $this->resultSet = null;
-        
-        if ( $this->stmt !== null ) {
+
+        if (null !== $this->stmt) {
             $this->stmt->close();
         }
 
@@ -199,48 +207,51 @@ abstract class DataSet implements IteratorAggregate {
     }
 
     /**
-      * Essentially the same as releaseRecords, but it won't work on a QueryDataSet that
-      * has been created with a ResultSet
-      *
-      * @return DataSet This object.
-      * @throws DataSetException
-      */
+     * Essentially the same as releaseRecords, but it won't work on a QueryDataSet that
+     * has been created with a ResultSet.
+     *
+     * @return DataSet This object.
+     *
+     * @throws DataSetException
+     */
     public function reset()
     {
-        if (! ($this->resultSet !== null && ($this instanceof QueryDataSet))) {
+        if (!(null !== $this->resultSet && ($this instanceof QueryDataSet))) {
             return $this->releaseRecords();
         } else {
-            throw new DataSetException("You cannot call reset() on a QueryDataSet.");
+            throw new DataSetException('You cannot call reset() on a QueryDataSet.');
         }
     }
 
     /**
-      * Gets the current database connection
-      *
-      * @return Connection A database connection.
-      */
+     * Gets the current database connection.
+     *
+     * @return Connection A database connection.
+     */
     public function connection()
     {
         return $this->conn;
     }
 
     /**
-      * Gets the Schema for this DataSet
-      *
-      * @return  Schema The Schema for this DataSet
-      */
+     * Gets the Schema for this DataSet.
+     *
+     * @return Schema The Schema for this DataSet
+     */
     public function schema()
     {
         return $this->schema;
     }
 
     /**
-      * Get Record at 0 based index position
-      *
-      * @param int $pos
-      * @return Record An instance of the found Record
-      * @throws DataSetException
-      */
+     * Get Record at 0 based index position.
+     *
+     * @param int $pos
+     *
+     * @return Record An instance of the found Record
+     *
+     * @throws DataSetException
+     */
     public function getRecord($pos)
     {
         if ($this->containsRecord($pos)) {
@@ -248,70 +259,75 @@ abstract class DataSet implements IteratorAggregate {
             if ($this instanceof TableDataSet) {
                 $rec->markForUpdate();
             }
-            $this->recordRetrievedCount++;
+            ++$this->recordRetrievedCount;
+
             return $rec;
         }
-        throw new DataSetException ("Record not found at index: " . $pos);
+        throw new DataSetException('Record not found at index: '.$pos);
     }
 
     /**
-      * Find Record at 0 based index position. This is an internal alternative 
-      * to getRecord which tries to be smart about the type of record it is.
-      *
-      * @param int $pos
-      * @return Record an instance of the found Record
-      * @throws DataSetException
-      */
-    public function findRecord($pos) 
+     * Find Record at 0 based index position. This is an internal alternative
+     * to getRecord which tries to be smart about the type of record it is.
+     *
+     * @param int $pos
+     *
+     * @return Record an instance of the found Record
+     *
+     * @throws DataSetException
+     */
+    public function findRecord($pos)
     {
         if ($this->containsRecord($pos)) {
             return $this->records[$pos];
         }
-        throw new DataSetException ("Record not found at index: " . $pos);
+        throw new DataSetException('Record not found at index: '.$pos);
     }
 
     /**
-     * Check to see if the DataSet contains a Record at 0 based position
+     * Check to see if the DataSet contains a Record at 0 based position.
      *
      * @param   pos
-     * @return     true if record exists
+     *
+     * @return true if record exists
      */
     public function containsRecord($pos)
     {
-        return (isset($this->records[$pos]));            
-    }   
+        return isset($this->records[$pos]);
+    }
 
     /**
      * Causes the DataSet to hit the database and fetch max records,
      * starting at start. Record count begins at 0.
      *
      * This method supports two signatures:
-       *     - fetchRecords(10); // LIMIT = 10
+     *     - fetchRecords(10); // LIMIT = 10
      *     - fetchRecords(5, 10); // OFFSET = 5, LIMIT = 10
-     * 
+     *
      * @param int $p1 max - or start if $p2 is set
      * @param int $p2 start
+     *
      * @return DataSet This class.
-     * @throws   SQLException
-     * @throws   DataSetException
+     *
+     * @throws SQLException
+     * @throws DataSetException
      */
     public function fetchRecords($p1 = 0, $p2 = null)
     {
-        if ($p2 !== null) {
+        if (null !== $p2) {
             $start = $p1;
             $max = $p2;
         } else {
             $start = 0;
             $max = $p1;
         }
-        
-        if ($this->lastFetchSize() > 0 && $this->records !== null) {
-            throw new DataSetException("You must call DataSet::clearRecords() before executing DataSet::fetchRecords() again!");
+
+        if ($this->lastFetchSize() > 0 && null !== $this->records) {
+            throw new DataSetException('You must call DataSet::clearRecords() before executing DataSet::fetchRecords() again!');
         }
 
         try {
-        
-            if ($this->stmt === null && $this->resultSet === null) {
+            if (null === $this->stmt && null === $this->resultSet) {
                 $this->stmt = $this->conn->createStatement();
                 $this->stmt->setOffset($start);
                 $this->stmt->setLimit($max);
@@ -321,32 +337,33 @@ abstract class DataSet implements IteratorAggregate {
                 $this->resultSet = $this->stmt->executeQuery($this->selectSql);
             }
 
-            if ($this->resultSet !== null) {
-
-                $this->records = array();
+            if (null !== $this->resultSet) {
+                $this->records = [];
 
                 $startCounter = 0;
                 $fetchCount = 0;
-                while (! $this->allRecordsRetrieved() ) {
+                while (!$this->allRecordsRetrieved()) {
                     if ($this->resultSet->next()) {
                         if ($startCounter >= $start) {
                             $this->records[] = new Record($this);
-                            $fetchCount++;
+                            ++$fetchCount;
                             if ($fetchCount === $max) { // check after because we must fetch at least 1
                                 break;
                             }
                         } else {
-                            $startCounter++;
+                            ++$startCounter;
                         }
                     } else {
                         $this->setAllRecordsRetrieved(true);
                         break;
                     }
-                }                
+                }
                 $this->lastFetchSize = $fetchCount;
             }
         } catch (SQLException $e) {
-            if ($this->stmt) $this->stmt->close();
+            if ($this->stmt) {
+                $this->stmt->close();
+            }
             throw $e;
         }
 
@@ -364,7 +381,7 @@ abstract class DataSet implements IteratorAggregate {
     }
 
     /**
-     * gets the KeyDef object for this DataSet
+     * gets the KeyDef object for this DataSet.
      *
      * @return KeyDef The keydef for this DataSet, this value can be null
      */
@@ -374,29 +391,31 @@ abstract class DataSet implements IteratorAggregate {
     }
 
     /**
-     * This returns a represention of this DataSet
+     * This returns a represention of this DataSet.
      */
     public function __toString()
     {
-        $sb = "";        
-        for ($i = 0, $size = $this->size(); $i < $size; $i++) {
+        $sb = '';
+        for ($i = 0, $size = $this->size(); $i < $size; ++$i) {
             $sb .= $this->getRecord($i);
         }
+
         return $sb;
-    }       
+    }
 
     /**
-      * Classes extending this class must implement this method.
-      *
-      * @return string The SELECT SQL.
-      * @throws DataSetException;
-      */
-    public abstract function getSelectSql();
-
-    /**
-     * Returns the columns attribute for the DataSet
+     * Classes extending this class must implement this method.
      *
-     * @return     the columns attribute for the DataSet
+     * @return string The SELECT SQL.
+     *
+     * @throws DataSetException;
+     */
+    abstract public function getSelectSql();
+
+    /**
+     * Returns the columns attribute for the DataSet.
+     *
+     * @return the columns attribute for the DataSet
      */
     public function getColumns()
     {
@@ -404,22 +423,23 @@ abstract class DataSet implements IteratorAggregate {
     }
 
     /**
-     * Gets the number of Records in this DataSet. It is 0 based. 
+     * Gets the number of Records in this DataSet. It is 0 based.
      *
      * @return int Number of Records in this DataSet
      */
     public function size()
     {
-        if ( $this->records === null )
+        if (null === $this->records) {
             return 0;
+        }
+
         return count($this->records);
     }
 }
 
-
 /**
  * The Iterator returned by DataSet::getIterator() that loops through the records.
- * 
+ *
  * Thanks to PHP5 SPL this allows you to foreach() over a DataSet:
  * <code>
  *   $ds = new QueryDataSet($conn, "select * from author");
@@ -428,37 +448,43 @@ abstract class DataSet implements IteratorAggregate {
  *     print $rec->getValue("mycol");
  *   }
  * </code>
- * 
+ *
  * @see DataSet::getIterator()
  */
-class DataSetIterator implements Iterator {
-
+class DataSetIterator implements Iterator
+{
     private $ds;
     private $size;
     private $pos;
-    
-    function __construct(DataSet $ds) {
+
+    public function __construct(DataSet $ds)
+    {
         $this->ds = $ds;
         $this->size = $ds->size();
     }
-    
-    function rewind() {
+
+    public function rewind()
+    {
         $this->pos = 0;
     }
-    
-    function valid() {
+
+    public function valid()
+    {
         return $this->pos < $this->size;
     }
-    
-    function key() {
+
+    public function key()
+    {
         return $this->pos;
     }
-    
-    function current() {
+
+    public function current()
+    {
         return $this->ds->getRecord($this->pos);
     }
-    
-    function next() {
-        $this->pos++;
+
+    public function next()
+    {
+        ++$this->pos;
     }
 }
