@@ -123,7 +123,7 @@ abstract class ResultSetCommon {
     /**
      * @see ResultSet::getIterator()
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
         require_once 'creole/ResultSetIterator.php';
         return new ResultSetIterator($this);

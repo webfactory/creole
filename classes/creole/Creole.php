@@ -356,7 +356,7 @@ class Creole {
 			}
 		}
 
-        return array_map(function ($value) { return urldecode($value); }, $parsed);
+        return array_map(function ($value) { return urldecode((string) $value); }, $parsed);
     }
 
     /**
