@@ -32,6 +32,7 @@ include_once 'creole/drivers/mysqli/MySQLiResultSet.php';
  * @package   creole.drivers.mysqli
  */
 class MySQLiConnection extends ConnectionCommon implements Connection {
+    private $lastQuery;
 
     /**
      * Connect to a database and log in as the specified user.
